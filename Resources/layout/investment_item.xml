@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:padding="12dp"
+              android:background="#FFFFFF"
+              android:elevation="2dp"
+              android:layout_margin="8dp">
+
+    <TextView
+        android:id="@+id/symbolText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AAPL"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/quantityText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="כמות: 5" />
+
+    <TextView
+        android:id="@+id/buyPriceText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="מחיר קנייה: 150 $" />
+
+    <TextView
+        android:id="@+id/currentPriceText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="מחיר נוכחי: 180 $" />
+
+    <TextView
+        android:id="@+id/profitText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="רווח: 150 $ (20%)"
+        android:textColor="#4CAF50"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/deleteButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="מחק"
+        android:layout_gravity="end"
+        android:background="@android:color/holo_red_light"
+        android:textColor="@android:color/white"
+        android:padding="8dp"
+        android:layout_marginTop="8dp"/>
+
+</LinearLayout>

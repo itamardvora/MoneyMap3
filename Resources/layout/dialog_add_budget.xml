@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="חודש (לדוגמה: 08/2025)" />
+        <EditText
+            android:id="@+id/budgetMonthInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="mm/yyyy" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="סכום חודשי" />
+        <EditText
+            android:id="@+id/budgetAmountInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            android:hint="₪" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="קטגוריה" />
+        <Spinner
+            android:id="@+id/budgetCategorySpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/confirmAddBudgetButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="הוסף תקציב"
+            android:layout_marginTop="16dp" />
+    </LinearLayout>
+</ScrollView>
+  

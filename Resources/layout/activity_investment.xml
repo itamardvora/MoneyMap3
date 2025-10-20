@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                  xmlns:app="http://schemas.android.com/apk/res-auto"
+
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="#FFFFFF">
+
+    <!-- שווי תיק ההשקעות -->
+    <TextView
+        android:id="@+id/portfolioValueText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="שווי תיק: 0 ₪"
+        android:textSize="22sp"
+        android:textColor="#000000"
+        android:gravity="center"
+        android:padding="8dp"
+        android:layout_marginBottom="12dp" />
+
+    <!-- כפתור הוספת השקעה חדשה -->
+    <Button
+        android:id="@+id/addInvestmentButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="הוסף השקעה חדשה"
+        android:layout_marginBottom="8dp" />
+
+    <!-- טופס הוספת השקעה -->
+    <LinearLayout
+        android:id="@+id/addFormLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:padding="12dp"
+        android:background="#F3F3F3"
+        android:elevation="2dp">
+
+        <EditText
+            android:id="@+id/symbolInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="סימבול מניה (למשל AAPL)"
+            android:inputType="textCapCharacters" />
+
+        <EditText
+            android:id="@+id/quantityInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="כמות"
+            android:inputType="numberDecimal" />
+
+        <EditText
+            android:id="@+id/buyPriceInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="מחיר קנייה של המניה "
+            android:inputType="numberDecimal" />
+
+        <EditText
+            android:id="@+id/buyDateInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="תאריך קנייה"
+            android:focusable="false"
+            android:clickable="true"
+            android:inputType="none"
+            android:background="@android:drawable/editbox_background"
+            android:padding="8dp"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/saveInvestmentButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="שמור השקעה"
+            android:layout_marginTop="12dp" />
+    </LinearLayout>
+
+    <!-- רשימת השקעות -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/investmentRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingTop="12dp" />
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="?android:attr/windowBackground"
+        app:menu="@menu/navigation_menu" />
+</LinearLayout>

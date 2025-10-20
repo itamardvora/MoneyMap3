@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="12dp"
+    android:background="#F0F0F0"
+    android:layout_marginBottom="8dp">
+
+    <!-- שם הקטגוריה -->
+    <TextView
+        android:id="@+id/categoryNameText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="קטגוריה: אוכל"
+        android:textStyle="bold"
+        android:textSize="18sp" />
+
+    <!-- סכום מתוכנן, הוצאה בפועל ויתרה -->
+    <TextView
+        android:id="@+id/plannedText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="מתוכנן: 1,000 ₪"
+        android:layout_marginTop="4dp" />
+
+    <TextView
+        android:id="@+id/spentText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="הוצאה: 600 ₪" />
+
+    <TextView
+        android:id="@+id/remainingText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="נותר: 400 ₪" />
+
+    <!-- פס התקדמות -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="@android:style/Widget.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="12dp"
+        android:layout_marginTop="8dp"
+        android:progress="60"
+        android:max="100"
+        android:progressTint="#4CAF50" />
+</LinearLayout>
