@@ -1,56 +1,91 @@
-﻿using Android.App;
-using Android.Content;
+﻿using System;
+using Android.App;
 using Android.OS;
-using Android.Runtime;
-using Android.Views;
 using Android.Widget;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using Xamarin.Essentials;
+using MoneyMap.Services;
 
 namespace MoneyMap.Activities
 {
-    [Activity(Label = "הרשמה")]
+    [Activity(
+        Name = "com.companyname.moneymap.Activities.RegisterActivity",
+        Label = "הרשמה",
+        Theme = "@style/AppTheme",
+        Exported = true)]
     public class RegisterActivity : Activity
     {
+        private EditText _fullNameInput;
+        private EditText _emailInput;
+        private EditText _passwordInput;
+        private EditText _birthDateInput;
+        private Button _registerButton;
+
         protected override async void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
+            Platform.Init(this, savedInstanceState);
             SetContentView(Resource.Layout.activity_register);
 
-            var fullNameInput = FindViewById<EditText>(Resource.Id.fullNameInput);
-            var emailInput = FindViewById<EditText>(Resource.Id.emailInput);
-            var passwordInput = FindViewById<EditText>(Resource.Id.passwordInput);
-            var birthDateInput = FindViewById<EditText>(Resource.Id.birthDateInput);
-            var registerButton = FindViewById<Button>(Resource.Id.registerButton);
+            if (!App.IsCoreReady())
+                await App.InitForAuthAsync();
 
-            registerButton.Click += async (s, e) =>
+            _fullNameInput = FindViewById<EditText>(Resource.Id.fullNameInput);
+            _emailInput = FindViewById<EditText>(Resource.Id.emailInput);
+            _passwordInput = FindViewById<EditText>(Resource.Id.passwordInput);
+            _birthDateInput = FindViewById<EditText>(Resource.Id.birthDateInput);
+            _registerButton = FindViewById<Button>(Resource.Id.registerButton);
+
+            // בחירת תאריך נוחה
+            _birthDateInput.Text = DateTime.Today.ToString("yyyy-MM-dd");
+            _birthDateInput.Focusable = false;
+            _birthDateInput.Click += (s, e) =>
             {
-                try
+                var t = DateTime.Today;
+                var dp = new DatePickerDialog(this, (snd, ev) =>
                 {
-                    string fullName = fullNameInput.Text.Trim();
-                    string email = emailInput.Text.Trim();
-                    string password = passwordInput.Text;
-                    DateTime birthDate;
-
-                    if (!DateTime.TryParse(birthDateInput.Text, out birthDate))
-                    {
-                        Toast.MakeText(this, "תאריך לא תקין", ToastLength.Short).Show();
-                        return;
-                    }
-
-                    var user = await App.UserService.RegisterUser(fullName, email, password, birthDate);
-                    Toast.MakeText(this, "נרשמת בהצלחה!", ToastLength.Long).Show();
-
-                    StartActivity(typeof(LoginActivity));
-                    Finish();
-                }
-                catch (Exception ex)
-                {
-                    Toast.MakeText(this, "שגיאה: " + ex.Message, ToastLength.Long).Show();
-                }
+                    _birthDateInput.Text = ev.Date.ToString("yyyy-MM-dd");
+                }, t.Year, t.Month - 1, t.Day);
+                dp.Show();
             };
+
+            _registerButton.Click += async (s, e) => await OnRegisterAsync();
+        }
+
+        private async System.Threading.Tasks.Task OnRegisterAsync()
+        {
+            try
+            {
+                var fullName = (_fullNameInput?.Text ?? "").Trim();
+                var email = (_emailInput?.Text ?? "").Trim().ToLowerInvariant();
+                var password = _passwordInput?.Text ?? "";
+
+                if (!DateTime.TryParse(_birthDateInput?.Text, out var birthDate))
+                {
+                    Toast.MakeText(this, "תאריך לידה לא תקין", ToastLength.Short).Show();
+                    return;
+                }
+
+                var (ok, err, user) = await App.UserService.TryRegisterAsync(fullName, email, password, birthDate);
+                if (!ok)
+                {
+                    Toast.MakeText(this, err, ToastLength.Long).Show();
+                    return;
+                }
+
+                Toast.MakeText(this, "נרשמת בהצלחה! אפשר להתחבר.", ToastLength.Short).Show();
+                StartActivity(typeof(LoginActivity));
+                Finish();
+            }
+            catch (Exception ex)
+            {
+                Toast.MakeText(this, "שגיאה: " + ex.Message, ToastLength.Long).Show();
+            }
+        }
+
+        public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Android.Content.PM.Permission[] grantResults)
+        {
+            Platform.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+            base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
         }
     }
 }

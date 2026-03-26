@@ -1,28 +1,17 @@
-﻿using Android.App;
-using Android.Content;
-using Android.OS;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
-using MoneyMap.Models;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System;
 using MoneyMap.DAL;
-using System.Text.Json;
-using System.Globalization;
-
+using MoneyMap.Models;
 
 namespace MoneyMap.Services
 {
-   public class BudgetService
+    public class BudgetService
     {
         private readonly BudgetRepository _budgetRepo;
         private readonly ExpenseRepository _expenseRepo;
-        private readonly CategoryRepository _categoryRepo; // אופציונלי – לבדוק קטגוריה קיימת
-        private string categoryName;
+        private readonly CategoryRepository _categoryRepo;
 
         public BudgetService(BudgetRepository budgetRepo, ExpenseRepository expenseRepo, CategoryRepository categoryRepo)
         {
@@ -38,12 +27,12 @@ namespace MoneyMap.Services
 
             var month = new DateTime(budgetMonth.Year, budgetMonth.Month, 1);
 
-            // בדיקה שאין כפילות לאותו משתמש+קטגוריה+חודש
+            // אין כפילות
             var existing = await _budgetRepo.GetUserBudget(userId, categoryId, month);
             if (existing != null)
                 throw new InvalidOperationException("Budget for this category and month already exists");
 
-            // (אופציונלי) לוודא שהקטגוריה קיימת למשתמש או מערכת
+            // וידוא שהקטגוריה קיימת למשתמש
             var userCats = await _categoryRepo.GetCategoriesForUser(userId);
             if (!userCats.Any(c => c.CategoryID == categoryId))
                 throw new ArgumentException("Category does not exist for this user");
@@ -67,7 +56,7 @@ namespace MoneyMap.Services
             var budgets = await _budgetRepo.GetUserBudgets(userId, month);
             var totalsList = await _expenseRepo.GetExpensesByCategory(userId, month);
             var totalsByCategory = totalsList.ToDictionary(x => x.CategoryID, x => x.TotalAmount);
-            var categories = await _categoryRepo.GetCategoriesForUser(userId); // 🟢 נוספה
+            var categories = await _categoryRepo.GetCategoriesForUser(userId);
 
             var result = new List<BudgetStatus>();
             foreach (var b in budgets)
@@ -85,13 +74,12 @@ namespace MoneyMap.Services
                     Spent = spent,
                     Remaining = remaining,
                     UsagePct = usagePct,
-                    CategoryName = categoryName // 🟢 זה מה שמופיע בכרטיסייה
+                    CategoryName = categoryName
                 });
             }
 
             return result;
         }
-
 
         public async Task<Dictionary<int, decimal>> GetRemainingBudget(int userId, DateTime budgetMonth)
         {
@@ -118,6 +106,5 @@ namespace MoneyMap.Services
 
             return _budgetRepo.UpdateMonthlyLimit(budgetId, newLimit);
         }
-
     }
 }

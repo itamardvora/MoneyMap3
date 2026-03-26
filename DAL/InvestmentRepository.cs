@@ -1,65 +1,53 @@
-﻿using Android.App;
-using Android.Content;
-using Android.OS;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
-using SQLite;
-using System.Text;
-using System.Threading.Tasks;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading.Tasks;
+using SQLite;
 using MoneyMap.Models;
+
 namespace MoneyMap.DAL
 {
     public class InvestmentRepository
     {
         private readonly SQLiteAsyncConnection _db;
-
         public InvestmentRepository(SQLiteAsyncConnection db)
         {
-            _db = db;
+            _db = db ?? throw new ArgumentNullException(nameof(db));
         }
 
-        //  שליפת השקעה לפי מזהה השקעה + מזהה משתמש
-        public async Task<Investment> GetById(int investmentId, int userId)
-        {
-            return await _db.Table<Investment>()
-                            .Where(i => i.InvestmentID == investmentId && i.UserID == userId)
-                            .FirstOrDefaultAsync();
-        }
+        // הוספה
+        public Task<int> AddInvestment(Investment inv) => _db.InsertAsync(inv);
 
-        //  שליפת כל ההשקעות של משתמש
-        public async Task<List<Investment>> GetAllByUser(int userId)
-        {
-            return await _db.Table<Investment>()
-                            .Where(i => i.UserID == userId)
-                            .ToListAsync();
-        }
 
-        //  הוספת השקעה חדשה
-        public async Task AddInvestment(Investment investment)
-        {
-            await _db.InsertAsync(investment);
-        }
+        // מחיקה מוגנת לפי משתמש
+        public Task<int> DeleteInvestment(int investmentId, int userId) =>
+            _db.Table<Investment>()
+               .Where(x => x.InvestmentID == investmentId && x.UserID == userId)
+               .DeleteAsync();
 
-        //  מחיקת השקעה לפי מזהה השקעה + מזהה משתמש
-        public async Task DeleteInvestment(int investmentId, int userId)
-        {
-            var investment = await GetById(investmentId, userId);
-            if (investment != null)
-            {
-                await _db.DeleteAsync(investment);
-            }
-        }
 
-        //  שליפת כל ההשקעות מסוג מניה מסוים (לפי סמל)
-        public async Task<List<Investment>> GetBySymbol(int userId, string stockSymbol)
-        {
-            return await _db.Table<Investment>()
-                            .Where(i => i.UserID == userId && i.StockSymbol == stockSymbol)
-                            .ToListAsync();
-        }
+        // שליפת מניות של משתמש 
+        public Task<List<Investment>> GetAllByUser(int userId) =>
+            _db.Table<Investment>()
+               .Where(x => x.UserID == userId)
+               .OrderByDescending(x => x.BuyDate)
+               .ToListAsync();
+
+
+
+        //public Task<List<Investment>> GetByUserId(int userId) => GetAllByUser(userId);
+
+
+
+        // מחזיר השקעה אחת ספציפית לשם המנייה המבוקשת 
+        public Task<Investment> GetById(int id, int userId) =>
+            _db.Table<Investment>()
+               .Where(x => x.InvestmentID == id && x.UserID == userId)
+               .FirstOrDefaultAsync();
+
+        // מחזיר את כל ההשקעות לפי מנייה מסוימת 
+        public Task<List<Investment>> GetBySymbol(int userId, string symbol) =>
+            _db.Table<Investment>()
+               .Where(x => x.UserID == userId && x.StockSymbol == symbol)
+               .ToListAsync();
     }
 }

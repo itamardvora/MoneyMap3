@@ -1,6 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#2c3e50</color>
-    <color name="colorPrimaryDark">#1B3147</color>
-    <color name="colorAccent">#3498db</color>
+	<!-- צבעי מותג בסיסיים -->
+	<color name="brandPrimary">#3F51B5</color>
+	<color name="brandPrimaryDark">#303F9F</color>
+	<color name="brandAccent">#FF4081</color>
+
+	<!-- רקע כללי של האפליקציה -->
+	<color name="background">#F5F6FA</color>
+
+	<!-- לצורך ה-BottomNavigation (אם אתה משתמש) -->
+	<color name="nav_selected">#222222</color>
+	<color name="nav_unselected">#888888</color>
+	<color name="bottom_nav_bg_top">#FFFFFFFF</color>
+	<color name="bottom_nav_bg_bottom">#FFF5F6FA</color>
+	<color name="surface">#FFFFFFFF</color>
+	<!-- לבן לכרטיסים -->
+	<color name="onSurface">#222222</color>
+	<!-- טקסט על לבן -->
+	<color name="surfaceVariant">#FFF5F6FA</color>
+	<!-- וריאנט בהיר -->
 </resources>

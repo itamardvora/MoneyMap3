@@ -4,76 +4,37 @@ using AndroidX.RecyclerView.Widget;
 using MoneyMap.Models;
 using System;
 using System.Collections.Generic;
+using Android.Graphics;
 
 namespace MoneyMap.Adapters
 {
+    // שורת תצוגה מוכנה – כל הטקסטים כבר עם מטבע וסכומים
+    public class InvestmentDisplayRow
+    {
+        public Investment Model { get; set; }
+
+        public string Symbol { get; set; }
+        public string BuyDateText { get; set; }
+        public string QuantityText { get; set; }
+        public string BuyPriceText { get; set; }
+        public string CostText { get; set; }
+        public string CurrentValueText { get; set; }
+        public string PnlText { get; set; }
+        public bool IsProfit { get; set; }
+    }
+
     public class InvestmentAdapter : RecyclerView.Adapter
     {
-        private List<Investment> _investments;
+        private List<InvestmentDisplayRow> _rows;
         private readonly Action<Investment> _onDeleteClicked;
 
-        public InvestmentAdapter(List<Investment> investments, Action<Investment> onDeleteClicked = null)
+        public InvestmentAdapter(List<InvestmentDisplayRow> rows, Action<Investment> onDeleteClicked = null)
         {
-            _investments = investments;
+            _rows = rows ?? new List<InvestmentDisplayRow>();
             _onDeleteClicked = onDeleteClicked;
         }
 
-        public override int ItemCount => _investments.Count;
-
-        public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position)
-        {
-            var investment = _investments[position];
-            var viewHolder = holder as InvestmentViewHolder;
-
-            viewHolder.SymbolText.Text = investment.StockSymbol;
-            viewHolder.QuantityText.Text = $"כמות: {investment.Quantity}";
-            viewHolder.BuyPriceText.Text = $"מחיר קנייה: {investment.BuyPrice:n2} $";
-            viewHolder.CurrentPriceText.Text = $"מחיר נוכחי: {investment.CurrentPrice:n2} $";
-
-            decimal totalCost = investment.Quantity * investment.BuyPrice;
-            decimal currentValue = investment.Quantity * (decimal)investment.CurrentPrice;
-            decimal profit = currentValue - totalCost;
-            decimal returnPercent = totalCost != 0 ? (profit / totalCost) * 100 : 0;
-
-            viewHolder.ProfitText.Text = $"רווח: {profit:n2} $ ({returnPercent:n2}%)";
-            //if (profit >= 0)
-            //{
-            //    viewHolder.ProfitText.Text = $"רווח: {profit:n2} $ ({returnPercent:n2}%)";
-
-            //}
-            //else
-            //{
-            //    viewHolder.ProfitText.Text = $"הפסד: {profit:n2} $ ({returnPercent:n2}%)";
-
-
-            //}
-            //// צבע ירוק לרווח, אדום להפסד
-            //if (profit >= 0)
-            //{
-            //    viewHolder.ProfitText.SetTextColor(Android.Graphics.Color.Rgb(0, 128, 0)); // ירוק כהה
-            //}
-            //else
-            //{
-            //    viewHolder.ProfitText.SetTextColor(Android.Graphics.Color.Red); // אדום
-            //}
-            if (profit >= 0)
-            {
-                viewHolder.ProfitText.Text = $"רווח: {profit:n2} $ ({returnPercent:n2}%)";
-                viewHolder.ProfitText.SetTextColor(Android.Graphics.Color.Green);
-            }
-            else
-            {
-                viewHolder.ProfitText.Text = $"הפסד: {profit:n2} $ ({returnPercent:n2}%)";
-                viewHolder.ProfitText.SetTextColor(Android.Graphics.Color.Red);
-            }
-
-            // לחיצה על כפתור מחיקה
-            viewHolder.DeleteButton.Click -= null;
-            viewHolder.DeleteButton.Click += (s, e) =>
-            {
-                _onDeleteClicked?.Invoke(investment);
-            };
-        }
+        public override int ItemCount => _rows.Count;
 
         public override RecyclerView.ViewHolder OnCreateViewHolder(ViewGroup parent, int viewType)
         {
@@ -82,30 +43,72 @@ namespace MoneyMap.Adapters
             return new InvestmentViewHolder(itemView);
         }
 
-        public void UpdateData(List<Investment> newData)
+        public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position)
         {
-            _investments = newData;
+            var vh = (InvestmentViewHolder)holder;
+            var row = _rows[position];
+
+            vh.SymbolText.Text = row.Symbol;
+            vh.BuyDateText.Text = row.BuyDateText;
+            vh.QuantityText.Text = row.QuantityText;
+            vh.BuyPriceText.Text = row.BuyPriceText;
+            vh.CostText.Text = row.CostText;
+            vh.CurrentValueText.Text = row.CurrentValueText;
+            vh.PnlText.Text = row.PnlText;
+
+            // צבע רווח/הפסד
+            vh.PnlText.SetTextColor(row.IsProfit
+                ? Color.Rgb(0, 150, 0)
+                : Color.Rgb(200, 0, 0));
+
+            vh.BindDelete(row.Model, _onDeleteClicked);
+        }
+
+        public void UpdateData(List<InvestmentDisplayRow> newRows)
+        {
+            _rows = newRows ?? new List<InvestmentDisplayRow>();
             NotifyDataSetChanged();
         }
     }
 
-    public class InvestmentViewHolder : RecyclerView.ViewHolder
+    public class InvestmentViewHolder : RecyclerView.ViewHolder, View.IOnClickListener
     {
-        public TextView SymbolText { get; private set; }
-        public TextView QuantityText { get; private set; }
-        public TextView BuyPriceText { get; private set; }
-        public TextView CurrentPriceText { get; private set; }
-        public TextView ProfitText { get; private set; }
-        public Button DeleteButton { get; private set; }
+        public TextView SymbolText { get; }
+        public TextView BuyDateText { get; }
+        public TextView QuantityText { get; }
+        public TextView BuyPriceText { get; }
+        public TextView CostText { get; }
+        public TextView CurrentValueText { get; }
+        public TextView PnlText { get; }
+        public Button DeleteButton { get; }
+
+        private Investment _boundItem;
+        private Action<Investment> _onDelete;
 
         public InvestmentViewHolder(View itemView) : base(itemView)
         {
             SymbolText = itemView.FindViewById<TextView>(Resource.Id.symbolText);
-            QuantityText = itemView.FindViewById<TextView>(Resource.Id.quantityText);
+            BuyDateText = itemView.FindViewById<TextView>(Resource.Id.buyDateText);
+            QuantityText = itemView.FindViewById<TextView>(Resource.Id.qtyText);
             BuyPriceText = itemView.FindViewById<TextView>(Resource.Id.buyPriceText);
-            CurrentPriceText = itemView.FindViewById<TextView>(Resource.Id.currentPriceText);
-            ProfitText = itemView.FindViewById<TextView>(Resource.Id.profitText);
-            DeleteButton = itemView.FindViewById<Button>(Resource.Id.deleteButton); // ודא שקיים ב־XML
+            CostText = itemView.FindViewById<TextView>(Resource.Id.costText);
+            CurrentValueText = itemView.FindViewById<TextView>(Resource.Id.currentValueText);
+            PnlText = itemView.FindViewById<TextView>(Resource.Id.pnlText);
+            DeleteButton = itemView.FindViewById<Button>(Resource.Id.deleteButton);
+
+            DeleteButton?.SetOnClickListener(this);
+        }
+
+        public void BindDelete(Investment item, Action<Investment> onDelete)
+        {
+            _boundItem = item;
+            _onDelete = onDelete;
+        }
+
+        public void OnClick(View v)
+        {
+            if (v == DeleteButton)
+                _onDelete?.Invoke(_boundItem);
         }
     }
 }

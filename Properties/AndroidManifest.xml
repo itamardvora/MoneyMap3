@@ -1,26 +1,43 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.companyname.moneymap"
-    android:versionCode="1"
-    android:versionName="1.0">
-
-	<!-- ✅ ההרשאות צריכות להיות כאן, לפני <application> -->
-	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.companyname.moneymap" android:versionCode="1" android:versionName="1.0">
+	<!-- רשת + מדיה/מצלמה -->
 	<uses-permission android:name="android.permission.INTERNET" />
-
+	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+	<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+	<uses-permission android:name="android.permission.CAMERA" />
+	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+	<!-- כדי לקבל BOOT_COMPLETED -->
+	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 	<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="33" />
-
-	<application
-        android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:supportsRtl="true"
-        android:theme="@style/AppTheme">
-
-		<!-- 🟢 רישום כל האקטיביטיז -->
-		<activity android:name=".Activities.InvestmentActivity" />
-		<activity android:name=".LoginActivity" />
-		<activity android:name=".HomeActivity" />
+	<application android:allowBackup="true" android:icon="@drawable/moneymap_logo" android:label="MoneyMap" android:supportsRtl="true" android:theme="@style/AppTheme">
+		<!-- Provider של Xamarin.Essentials -->
+		<provider android:name="xamarin.essentials.fileProvider" android:authorities="${applicationId}.fileProvider" android:exported="false" android:grantUriPermissions="true">
+			<meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/xamarin_essentials_fileprovider_file_paths" />
+		</provider>
+		<!-- Main/Launcher -->
+		<activity android:name="com.companyname.moneymap.MainActivity" android:exported="true">
+			<intent-filter>
+				<action android:name="android.intent.action.MAIN" />
+				<category android:name="android.intent.category.LAUNCHER" />
+			</intent-filter>
+		</activity>
+		<!-- מסכים -->
+		<activity android:name="com.companyname.moneymap.Activities.LoginActivity" android:exported="true" />
+		<activity android:name="com.companyname.moneymap.Activities.RegisterActivity" android:exported="true" />
+		<activity android:name="com.companyname.moneymap.Activities.HomeActivity" android:exported="true" />
+		<activity android:name="com.companyname.moneymap.Activities.BudgetActivity" android:exported="false" />
+		<activity android:name="com.companyname.moneymap.Activities.InvestmentActivity" android:exported="false" />
+		<!-- === Broadcast Receivers === -->
+		<receiver android:name="com.companyname.moneymap.Services.BootCompletedReceiver" android:enabled="true" android:exported="true" android:directBootAware="true">
+			<intent-filter>
+				<action android:name="android.intent.action.BOOT_COMPLETED" />
+				<action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+			</intent-filter>
+		</receiver>
+		<receiver android:name="com.companyname.moneymap.Services.AlarmFireReceiver" android:enabled="true" android:exported="false" />
+		<!-- Service -->
+		<service android:name="com.companyname.moneymap.Services.RatesSyncService" android:exported="false" />
 	</application>
-
 </manifest>

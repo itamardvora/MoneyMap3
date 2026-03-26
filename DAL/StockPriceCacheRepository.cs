@@ -65,8 +65,7 @@ namespace MoneyMap.DAL
             }
         }
 
-        // בודק אם המטמון עדיין תקף (פחות משעה)
-        public async Task<bool> IsCacheValid(string stockSymbol)
+        public async Task<bool> IsCacheValid(string stockSymbol)// בודק אם המחירים עדכניים כלומר עברו פחות מ24 שעות 
         {
             var existing = await GetBySymbol(stockSymbol);
             if (existing == null) return false;

@@ -1,4 +1,4 @@
-﻿
+﻿// MoneyMap/Services/PortfolioService.cs
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,60 +15,37 @@ namespace MoneyMap.Services
 
         public PortfolioService(InvestmentRepository investments, StockPriceService prices)
         {
-            _investments = investments;
-            _prices = prices;
+            _investments = investments ?? throw new ArgumentNullException(nameof(investments));
+            _prices = prices ?? throw new ArgumentNullException(nameof(prices));
         }
 
-        static string Norm(string s) => (s ?? "").Trim().ToUpperInvariant();
+        private static string Norm(string s) => (s ?? "").Trim().ToUpperInvariant();
 
-        async Task<Dictionary<string, decimal>> BuildPriceMap(IEnumerable<string> symbols)
+        private async Task<Dictionary<string, decimal>> BuildPriceMap(IEnumerable<string> symbols)
         {
             var map = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
             foreach (var s in symbols.Distinct().Where(x => !string.IsNullOrWhiteSpace(x)))
             {
+                var sym = Norm(s);
                 try
                 {
-                    var p = await _prices.GetPriceOrFetch(Norm(s));
-                    map[Norm(s)] = p;
+                    var p = await _prices.GetPriceOrFetch(sym);
+                    if (p > 0) map[sym] = p;
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // אפשר לוג – לא מפילים את כל החישוב על כשל סימבול בודד
+                    System.Diagnostics.Debug.WriteLine($"[PortfolioService] skip symbol {sym}: {ex.Message}");
+                    // לא מפילים חישוב על כשל סימבול בודד
                 }
             }
             return map;
         }
-        //
 
+        // תאימות לשם שה-Activity שלך מצפה לו
+        public Task<decimal> GetPortfolioTotalValueAsync(int userId)
+            => GetTotalPortfolioValue(userId);
 
-        public async Task<List<Investment>> EnrichInvestmentsWithPrices(List<Investment> investments)
-        {
-            if (investments == null || investments.Count == 0)
-                return new List<Investment>();
-
-            var symbols = investments.Select(i => i.StockSymbol);
-            var priceMap = await BuildPriceMap(symbols);
-
-            foreach (var inv in investments)
-            {
-                var sym = Norm(inv.StockSymbol);
-                if (priceMap.TryGetValue(sym, out var current))
-                {
-                    inv.CurrentPrice = (double)current; // ודא שיש CurrentPrice במחלקת Investment
-                }
-            }
-
-            return investments;
-        }
-
-
-
-
-
-
-
-        //
-
+        // שווי תיק כולל (ILS)
         public async Task<decimal> GetTotalPortfolioValue(int userId)
         {
             var list = await _investments.GetAllByUser(userId);
@@ -86,27 +63,49 @@ namespace MoneyMap.Services
             return total;
         }
 
-        // רווח/הפסד כספי כולל (לא אחוז)
-        public async Task<decimal> GetTotalPortfolioReturn(int userId)
+        // רווח/הפסד כספי כולל (ILS)
+        public async Task<decimal> GetPortfolioPnLAsync(int userId)
         {
             var list = await _investments.GetAllByUser(userId);
             if (list.Count == 0) return 0m;
 
             var priceMap = await BuildPriceMap(list.Select(i => i.StockSymbol));
-            decimal totalProfit = 0m;
+            decimal totalPnl = 0m;
 
             foreach (var inv in list)
             {
                 var sym = Norm(inv.StockSymbol);
                 if (!priceMap.TryGetValue(sym, out var current)) continue;
 
-                var buy = (decimal)inv.BuyPrice;
-                totalProfit += (current - buy) * inv.Quantity;
+                var cost = inv.BuyPrice * inv.Quantity;
+                var currVal = current * inv.Quantity;
+                totalPnl += (currVal - cost);
             }
-            return totalProfit;
+            return totalPnl;
         }
 
-        // כמות כוללת וכמה הושקע לכל סימבול
+        // מעשיר את רשימת ההשקעות במחיר נוכחי (אם קיים שדה כזה במודל)
+        public async Task<List<Investment>> EnrichInvestmentsWithPrices(List<Investment> investments)
+        {
+            if (investments == null || investments.Count == 0)
+                return new List<Investment>();
+
+            var symbols = investments.Select(i => i.StockSymbol);
+            var priceMap = await BuildPriceMap(symbols);
+
+            foreach (var inv in investments)
+            {
+                var sym = Norm(inv.StockSymbol);
+                if (priceMap.TryGetValue(sym, out var current))
+                {
+                    inv.CurrentPrice = (double)current;
+                }
+            }
+
+            return investments;
+        }
+
+        // כמות והושקע לכל סימבול
         public async Task<List<SymbolAggregate>> GetAggregatedBySymbol(int userId)
         {
             var list = await _investments.GetAllByUser(userId);
@@ -178,7 +177,8 @@ namespace MoneyMap.Services
             }
 
             var total = values.Values.Sum();
-            if (total == 0) return values.Select(kv => new BreakdownEntry { Symbol = kv.Key, Percent = 0.0 }).ToList();
+            if (total == 0)
+                return values.Select(kv => new BreakdownEntry { Symbol = kv.Key, Percent = 0.0 }).ToList();
 
             return values
                 .Select(kv => new BreakdownEntry
@@ -190,11 +190,8 @@ namespace MoneyMap.Services
                 .ToList();
         }
 
-        // היסטוריית רכישות לסימבול מסוים
         public Task<List<Investment>> GetBySymbol(int userId, string stockSymbol)
-        {
-            return _investments.GetBySymbol(userId, Norm(stockSymbol));
-        }
+            => _investments.GetBySymbol(userId, Norm(stockSymbol));
     }
 
     // DTOs

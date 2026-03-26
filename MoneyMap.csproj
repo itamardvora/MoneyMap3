@@ -61,33 +61,50 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Activities\BudgetActivity.cs" />
+    <Compile Include="Activities\DialogFragment.cs" />
     <Compile Include="Activities\HomeActivity.cs" />
     <Compile Include="Activities\InvestmentActivity.cs" />
     <Compile Include="Activities\LoginActivity.cs" />
     <Compile Include="Activities\RegisterActivity.cs" />
     <Compile Include="Adapter\BudgetAdapter.cs" />
+    <Compile Include="Adapter\ExpenseListAdapter.cs" />
     <Compile Include="Adapter\InvestmentAdapter.cs" />
     <Compile Include="App.cs" />
+    <Compile Include="Services\AlarmFireReceiver.cs" />
+    <Compile Include="Services\AlarmScheduler.cs" />
+    <Compile Include="Services\BootCompletedReceiver.cs" />
+    <Compile Include="Services\ExchangeRatesClient.cs" />
+    <Compile Include="Services\IExchangeRatesClient.cs" />
+    <Compile Include="Services\RatesSyncService.cs" />
+    <Compile Include="Utils\CardSpacingDecoration.cs" />
     <Compile Include="DAL\BudgetRepository.cs" />
     <Compile Include="DAL\CategoryRepository.cs" />
+    <Compile Include="DAL\CurrencyRateRepository.cs" />
     <Compile Include="DAL\DatabaseContext.cs" />
     <Compile Include="DAL\ExpenseRepository.cs" />
+    <Compile Include="DAL\InvestmentMigrationHelper.cs" />
     <Compile Include="DAL\InvestmentRepository.cs" />
     <Compile Include="DAL\StockPriceCacheRepository.cs" />
     <Compile Include="DAL\UserRepository.cs" />
+    <Compile Include="DAL\UserSettingsRepository.cs" />
+    <Compile Include="Services\CurrencyApiClient.cs" />
     <Compile Include="MainActivity.cs" />
     <Compile Include="Models\Budget.cs" />
     <Compile Include="Models\Category.cs" />
+    <Compile Include="Models\CurrencyRate.cs" />
+    <Compile Include="Models\DisplayBudgetStatus.cs" />
     <Compile Include="Models\Expense.cs" />
     <Compile Include="Models\Investment.cs" />
     <Compile Include="Models\StockPrices.cs" />
     <Compile Include="Models\User.cs" />
+    <Compile Include="Models\UserSettings.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\AlphaVantageClient.cs" />
     <Compile Include="Services\BudgetService.cs" />
     <Compile Include="Services\BudgetStatus.cs" />
     <Compile Include="Services\CategoryService.cs" />
+    <Compile Include="Services\CurrencyService.cs" />
     <Compile Include="Services\ExpenseService.cs" />
     <Compile Include="Services\InvestmentService.cs" />
     <Compile Include="Services\PortfolioService.cs" />
@@ -104,7 +121,7 @@
     <AndroidResource Include="Resources\layout\activity_main.xml">
       <SubType>Designer</SubType>
     </AndroidResource>
-    <AndroidResource Include="Resources\values\colors.xml" />
+    <AndroidBoundLayout Include="Resources\values\colors.xml" />
     <AndroidResource Include="Resources\values\ic_launcher_background.xml" />
     <AndroidResource Include="Resources\values\strings.xml" />
     <AndroidResource Include="Resources\values\styles.xml" />
@@ -127,7 +144,9 @@
     <AndroidResource Include="Resources\mipmap-xxxhdpi\ic_launcher_round.png" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Resources\drawable\" />
+    <AndroidResource Include="Resources\layout\activity_category_expenses.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json">
@@ -145,9 +164,21 @@
     <PackageReference Include="System.Text.Json">
       <Version>7.0.3</Version>
     </PackageReference>
-    <PackageReference Include="Xamarin.AndroidX.AppCompat" Version="1.2.0.5" />
+    <PackageReference Include="Xamarin.AndroidX.AppCompat" Version="1.6.1.3" />
+    <PackageReference Include="Xamarin.AndroidX.CardView">
+      <Version>1.0.0.22</Version>
+    </PackageReference>
+    <PackageReference Include="Xamarin.AndroidX.ConstraintLayout">
+      <Version>2.1.4</Version>
+    </PackageReference>
+    <PackageReference Include="Xamarin.AndroidX.Fragment">
+      <Version>1.6.2</Version>
+    </PackageReference>
+    <PackageReference Include="Xamarin.AndroidX.RecyclerView">
+      <Version>1.3.2</Version>
+    </PackageReference>
     <PackageReference Include="Xamarin.Google.Android.Material" Version="1.0.0.1" />
-    <PackageReference Include="Xamarin.Essentials" Version="1.6.1" />
+    <PackageReference Include="Xamarin.Essentials" Version="1.7.5" />
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\layout\activity_login.xml">
@@ -196,6 +227,88 @@
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\menu\navigation_menu.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\color\bottom_nav_selector.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\bottom_nav_background.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\input_bg.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\spinner_bg.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\ic_home.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\ic_investments.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\ic_budget.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\layout\item_expense.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidBoundLayout Include="Resources\XML\file_paths.xml">
+      <SubType>Designer</SubType>
+    </AndroidBoundLayout>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\layout\dialog_expenses_list.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\bg_card.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\bg_nav_item.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\layout\bottom_nav_pretty.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\color\nav_text_selector.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\layout\item_budget_row.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="External\" />
+    <Folder Include="pictures\" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\moneymap_logo.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.

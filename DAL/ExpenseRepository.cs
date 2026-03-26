@@ -1,18 +1,8 @@
-﻿using Android.App;
-using Android.Content;
-using Android.OS;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using SQLite;
-using System;
-using System.IO;
-using Xamarin.Essentials;
-using MoneyMap.Models;
 using System.Threading.Tasks;
+using SQLite;
+using MoneyMap.Models;
 
 namespace MoneyMap.DAL
 {
@@ -25,66 +15,74 @@ namespace MoneyMap.DAL
     public class ExpenseRepository
     {
         private readonly SQLiteAsyncConnection _db;
+        private static bool _schemaEnsured = false;
 
-        public ExpenseRepository(SQLiteAsyncConnection db)
+        public ExpenseRepository(SQLiteAsyncConnection db)//  בודקת שקיימת טבלה אם לא קוראת לפעולה שתיצור 
         {
             _db = db;
+            _ = EnsureSchemaAsync();
         }
 
-        // Create: מוסיף הוצאה חדשה (אובייקט מלא)
-        public Task AddExpense(Expense expense)
+        private async Task EnsureSchemaAsync()// מוודא שהדאטה בייס מוכן לשימוש 
         {
-            // מומלץ לוודא בשכבת Service: מילוי CreatedAt, ולידציות, וכו'
-            return _db.InsertAsync(expense);
+            if (_schemaEnsured) return;
+
+            await _db.CreateTableAsync<Expense>();
+
+            try
+            {
+                await _db.ExecuteAsync("ALTER TABLE ExpensesTable ADD COLUMN ReceiptPath TEXT");
+            }
+            catch
+            {
+                // exists – ignore
+            }
+
+            await _db.ExecuteAsync(
+                "CREATE INDEX IF NOT EXISTS idx_expenses_user_date ON ExpensesTable (UserID, Date)");
+
+            _schemaEnsured = true;
         }
 
-        // Read: כל ההוצאות של המשתמש בחודש מסוים
-        public Task<List<Expense>> GetUserExpenses(int userId, DateTime month)
+        public Task AddExpense(Expense expense) => _db.InsertAsync(expense);// הוספת הוצאה 
+
+        public Task<List<Expense>> GetUserExpenses(int userId, DateTime month) // מחזיר רשימת הוצאות 
         {
-            // סינון לפי משתמש + חודש/שנה
+            var start = new DateTime(month.Year, month.Month, 1);
+            var end = start.AddMonths(1);
+
             return _db.Table<Expense>()
-                      .Where(e => e.UserID == userId
-                               && e.Date.Year == month.Year
-                               && e.Date.Month == month.Month)
+                      .Where(e => e.UserID == userId && e.Date >= start && e.Date < end)
                       .ToListAsync();
         }
 
-        // Read (אגרגציה): סכום הוצאות לפי קטגוריה בחודש (יעיל עם SQL ישיר)
-        public Task<List<ExpenseCategoryTotal>> GetExpensesByCategory(int userId, DateTime month)
+        public Task<List<ExpenseCategoryTotal>> GetExpensesByCategory(int userId, DateTime month)// תחזיר כמה כסף בובז בכל קטגוריה 
         {
             var start = new DateTime(month.Year, month.Month, 1);
             var end = start.AddMonths(1);
 
             const string sql = @"
-        SELECT CategoryID AS CategoryID,
-               SUM(Amount) AS TotalAmount
-        FROM ExpensesTable
-        WHERE UserID = ?
-          AND Date >= ? AND Date < ?
-        GROUP BY CategoryID";
-
+                SELECT CategoryID AS CategoryID,
+                       SUM(Amount) AS TotalAmount
+                FROM ExpensesTable
+                WHERE UserID = ?
+                  AND Date >= ? AND Date < ?
+                GROUP BY CategoryID";
             return _db.QueryAsync<ExpenseCategoryTotal>(sql, userId, start, end);
         }
 
-
-        // Delete: מוחק הוצאה לפי מזהה, רק אם שייכת למשתמש
         public async Task DeleteExpense(int userId, int expenseId)
         {
             var expense = await _db.Table<Expense>()
                                    .Where(e => e.ExpenseID == expenseId && e.UserID == userId)
                                    .FirstOrDefaultAsync();
             if (expense != null)
-            {
                 await _db.DeleteAsync(expense);
-            }
         }
 
-        // אופציונלי: שליפה לפי מזהה (לפעמים שימושי לשירותים)
-        public Task<Expense> GetById(int userId, int expenseId)
-        {
-            return _db.Table<Expense>()
-                      .Where(e => e.ExpenseID == expenseId && e.UserID == userId)
-                      .FirstOrDefaultAsync();
-        }
+        public Task<Expense> GetById(int userId, int expenseId) =>
+            _db.Table<Expense>()
+               .Where(e => e.ExpenseID == expenseId && e.UserID == userId)
+               .FirstOrDefaultAsync();
     }
 }

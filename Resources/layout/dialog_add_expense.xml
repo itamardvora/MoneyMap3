@@ -17,7 +17,7 @@
             android:id="@+id/expenseDateInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="dd/mm/yyyy" />
+            android:hint="yyyy-mm-dd" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -38,7 +38,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="numberDecimal"
-            android:hint="₪" />
+            android:hint="סכום" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -48,6 +48,24 @@
             android:id="@+id/expenseCategorySpinner"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
+
+        <!-- צילום קבלה -->
+        <Button
+            android:id="@+id/captureReceiptButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="צלם קבלה"
+            android:layout_marginTop="12dp" />
+
+        <ImageView
+            android:id="@+id/receiptPreviewImage"
+            android:layout_width="match_parent"
+            android:layout_height="160dp"
+            android:scaleType="centerCrop"
+            android:adjustViewBounds="true"
+            android:contentDescription="תצוגת קבלה"
+            android:layout_marginTop="8dp"
+            android:visibility="gone" />
 
         <Button
             android:id="@+id/confirmAddExpenseButton"

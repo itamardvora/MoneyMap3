@@ -1,11 +1,11 @@
-﻿using Android.App;
+﻿// MoneyMap/MainActivity.cs
+using Android.App;
 using Android.OS;
-using AndroidX.AppCompat.App;
 using MoneyMap.Activities;
 
 namespace MoneyMap
 {
-    [Activity(Label = "@string/app_name", Theme = "@style/AppTheme", MainLauncher = true)]
+    [Activity(Label = "@string/app_name", Theme = "@style/AppTheme", MainLauncher = true, Exported = true, Name = "com.companyname.moneymap.MainActivity")]
     public class MainActivity : Activity
     {
         protected override async void OnCreate(Bundle savedInstanceState)
@@ -13,13 +13,11 @@ namespace MoneyMap
             base.OnCreate(savedInstanceState);
             SetContentView(Resource.Layout.activity_main);
 
-            // קריאה יחידה שמאתחלת DB + DAL + Services
-            await App.InitAsync();
+            if (!App.IsCoreReady())
+                await App.InitForAuthAsync();
+
             StartActivity(typeof(LoginActivity));
             Finish();
-            // מכאן ה-UI משתמש בשירותים:
-            // var user = await App.UserService.LoginUser(email, password);
-
         }
     }
 }

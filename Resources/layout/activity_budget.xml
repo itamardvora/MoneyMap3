@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:app="http://schemas.android.com/apk/res-auto"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:padding="16dp">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F6FA"
+    android:padding="16dp">
 
-    <!-- כל התוכן הגלוי במסך -->
     <LinearLayout
         android:id="@+id/contentLayout"
-        android:layout_above="@id/bottomNavigation"
-        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:layout_above="@+id/bottomNavigation"
+        android:orientation="vertical">
 
-        <!-- כפתור הוספת הוצאה -->
         <Button
             android:id="@+id/addExpenseButton"
             android:layout_width="match_parent"
@@ -21,19 +20,19 @@
             android:text="הוסף הוצאה"
             android:layout_marginBottom="12dp" />
 
-        <!-- סיכום כולל -->
         <TextView
             android:id="@+id/totalBudgetText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="תקציב כולל: 0 ₪"
-            android:textSize="18sp" />
+            android:text="תקציב כולל: 0"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/totalRemainingText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="יתרה כוללת: 0 ₪"
+            android:text="יתרה כוללת: 0"
             android:textSize="18sp"
             android:layout_marginBottom="8dp" />
 
@@ -47,16 +46,14 @@
             android:progressTint="#4CAF50"
             android:layout_marginBottom="16dp" />
 
-        <!-- רשימת קטגוריות -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/categoryRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:layout_marginBottom="12dp"
-            android:layout_marginTop="8dp" />
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="12dp" />
 
-        <!-- כפתור הוספת תקציב -->
         <Button
             android:id="@+id/addBudgetButton"
             android:layout_width="match_parent"
@@ -65,13 +62,11 @@
             android:layout_marginTop="12dp" />
     </LinearLayout>
 
-    <!-- ניווט תחתון -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="?android:attr/windowBackground"
+        android:background="@drawable/bottom_nav_background"
         app:menu="@menu/navigation_menu" />
-
 </RelativeLayout>

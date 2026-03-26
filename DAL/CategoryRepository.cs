@@ -23,7 +23,7 @@ namespace MoneyMap.DAL
             _db = db;
         }
 
-        public async Task<int> AddCategory(string categoryName, int createdByUserID)
+        public async Task<int> AddCategory(string categoryName, int createdByUserID)// הוספת קטגוריה 
         {
             var category = new Category
             {
@@ -33,11 +33,11 @@ namespace MoneyMap.DAL
             };
 
             await _db.InsertAsync(category);
-            return category.CategoryID; // ✅ מחזיר את ה-ID שנוצר אוטומטית
+            return category.CategoryID; 
         }
 
 
-        public async Task<List<Category>> GetCategoriesForUser(int userId)
+        public async Task<List<Category>> GetCategoriesForUser(int userId)// שולף רשימה של הקטגוריה שנוצרו על ידי המערכת ועל ידי המשתמש 
         {
             return await _db.Table<Category>()
                             .Where(c => c.CreatedByUserID == userId || c.IsSystem)

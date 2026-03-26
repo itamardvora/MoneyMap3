@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:padding="12dp"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_card"
+    android:layout_marginBottom="10dp">
+
+    <TextView
+        android:id="@+id/categoryNameText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="מזון"
+        android:textStyle="bold"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/plannedText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="מתוכנן: ₪ 2,000" />
+
+    <TextView
+        android:id="@+id/spentText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="הוצאה: ₪ 1,250" />
+
+    <TextView
+        android:id="@+id/remainingText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="נותר: ₪ 750" />
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="16dp"
+        android:max="100"
+        android:progress="40"
+        android:layout_marginTop="6dp"
+        android:progressTint="#4CAF50" />
+
+    <Button
+        android:id="@+id/btnViewExpenses"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="הצג הוצאות"
+        android:layout_marginTop="8dp" />
+</LinearLayout>

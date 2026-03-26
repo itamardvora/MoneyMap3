@@ -2,92 +2,134 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#F5F6FA"
+    android:padding="16dp">
 
-    <!-- התוכן הגליל -->
+    <!-- פס עליון: ברכת שלום + בחירת מטבע תצוגה -->
+    <LinearLayout
+        android:id="@+id/topBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/helloUserText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="שלום, משתמש"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <Spinner
+            android:id="@+id/currencySpinner"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:spinnerMode="dropdown" />
+    </LinearLayout>
+
     <ScrollView
-        android:id="@+id/scrollView"
+        android:id="@+id/scroll"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/bottomNavigation">
+        android:layout_below="@id/topBar"
+        android:layout_above="@+id/bottomNavigation"
+        android:fillViewport="true"
+        android:layout_marginTop="12dp">
 
         <LinearLayout
-            android:orientation="vertical"
-            android:padding="20dp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-            <!-- ברוך הבא -->
-            <TextView
-                android:id="@+id/welcomeText"
-                android:text="שלום"
-                android:textSize="22sp"
-                android:textStyle="bold"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-
-            <!-- כרטיסיה: השקעות -->
+            <!-- כרטיס תקציב -->
             <LinearLayout
-                android:id="@+id/investmentCard"
-                android:orientation="vertical"
-                android:padding="15dp"
-                android:background="#EEEEEE"
-                android:layout_marginTop="20dp"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#FFFFFF"
+                android:elevation="4dp"
+                android:padding="16dp"
+                android:layout_marginBottom="12dp"
+                android:layout_marginHorizontal="4dp">
 
                 <TextView
-                    android:id="@+id/investmentSummaryText"
-                    android:text="טוען נתוני השקעות..."
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:text="תקציב החודש"
+                    android:textStyle="bold"
                     android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/homeBudgetTotalText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="סה״כ: ₪ 0"
+                    android:textSize="18sp"
+                    android:layout_marginTop="6dp" />
+
+                <TextView
+                    android:id="@+id/homeBudgetRemainingText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="יתרה: ₪ 0"
+                    android:textSize="18sp"
+                    android:layout_marginTop="2dp" />
+
+                <!-- ✅ הכפתור החדש -->
+                <Button
+                    android:id="@+id/homeAddExpenseButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="הוסף הוצאה"
+                    android:layout_marginTop="12dp" />
             </LinearLayout>
 
-            <!-- כרטיסיה: תקציב -->
+            <!-- כרטיס השקעות -->
             <LinearLayout
-                android:id="@+id/budgetCard"
-                android:orientation="vertical"
-                android:padding="15dp"
-                android:background="#EEEEEE"
-                android:layout_marginTop="20dp"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#FFFFFF"
+                android:elevation="4dp"
+                android:padding="16dp"
+                android:layout_marginBottom="12dp"
+                android:layout_marginHorizontal="4dp">
 
                 <TextView
-                    android:id="@+id/totalBudgetHomeText"
-                    android:text="סה״כ תקציב: ₪0"
-                    android:textSize="16sp"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="השקעות"
+                    android:textStyle="bold"
+                    android:textSize="16sp" />
 
                 <TextView
-                    android:id="@+id/remainingBudgetHomeText"
-                    android:text="יתרה: ₪0"
-                    android:textSize="16sp"
-                    android:layout_width="match_parent"
+                    android:id="@+id/homePortfolioValueText"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp" />
+                    android:text="שווי תיק: ₪ 0"
+                    android:textSize="18sp"
+                    android:layout_marginTop="6dp" />
 
-                <ProgressBar
-                    android:id="@+id/budgetProgressBar"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="match_parent"
+                <TextView
+                    android:id="@+id/homePortfolioPnlText"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:max="100"
-                    android:progress="0"
-                    android:progressTint="#4CAF50"
-                    android:backgroundTint="#E0E0E0" />
+                    android:text="רווח/הפסד: ₪ 0"
+                    android:textSize="18sp"
+                    android:layout_marginTop="2dp" />
             </LinearLayout>
+
         </LinearLayout>
     </ScrollView>
 
-    <!-- ניווט תחתון -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="?android:attr/windowBackground"
+        android:background="@drawable/bottom_nav_background"
         app:menu="@menu/navigation_menu" />
 </RelativeLayout>

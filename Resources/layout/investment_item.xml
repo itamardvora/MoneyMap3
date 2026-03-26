@@ -1,56 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="wrap_content"
-              android:padding="12dp"
-              android:background="#FFFFFF"
-              android:elevation="2dp"
-              android:layout_margin="8dp">
+    android:padding="12dp"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#FFFFFF"
+    android:layout_marginBottom="8dp"
+    android:elevation="3dp">
 
     <TextView
         android:id="@+id/symbolText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="AAPL"
         android:textSize="18sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:text="AAPL"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
 
     <TextView
-        android:id="@+id/quantityText"
+        android:id="@+id/buyDateText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="כמות: 5" />
+        android:text="2025-10-01" />
+
+    <TextView
+        android:id="@+id/qtyText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="כמות: 10" />
 
     <TextView
         android:id="@+id/buyPriceText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="מחיר קנייה: 150 $" />
+        android:text="מחיר קנייה: ₪ 100.00" />
 
     <TextView
-        android:id="@+id/currentPriceText"
+        android:id="@+id/costText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="מחיר נוכחי: 180 $" />
+        android:text="עלות: ₪ 1,000.00" />
 
     <TextView
-        android:id="@+id/profitText"
+        android:id="@+id/currentValueText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="רווח: 150 $ (20%)"
-        android:textColor="#4CAF50"
-        android:textStyle="bold" />
+        android:text="שווי נוכחי: ₪ 1,150.00" />
+
+    <TextView
+        android:id="@+id/pnlText"
+        android:text="רווח/הפסד: ₪ 150.00"
+        android:textStyle="bold"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"/>
 
     <Button
         android:id="@+id/deleteButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="מחק"
-        android:layout_gravity="end"
-        android:background="@android:color/holo_red_light"
-        android:textColor="@android:color/white"
-        android:padding="8dp"
-        android:layout_marginTop="8dp"/>
-
+        android:backgroundTint="#D32F2F"
+        android:textColor="#FFFFFF"
+        android:padding="6dp" />
 </LinearLayout>
