@@ -13,7 +13,7 @@ using Xamarin.Essentials;
 using MoneyMap.Services;
 using MoneyMap.Adapters;
 using MoneyMap.Models;
-
+//1
 namespace MoneyMap.Activities
 {
     [Activity(
