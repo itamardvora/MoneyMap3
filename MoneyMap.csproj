@@ -61,20 +61,24 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Activities\BudgetActivity.cs" />
-    <Compile Include="Activities\DialogFragment.cs" />
+    <Compile Include="Activities\CategoryExpensesActivity.cs" />
     <Compile Include="Activities\HomeActivity.cs" />
     <Compile Include="Activities\InvestmentActivity.cs" />
     <Compile Include="Activities\LoginActivity.cs" />
     <Compile Include="Activities\RegisterActivity.cs" />
     <Compile Include="Adapter\BudgetAdapter.cs" />
     <Compile Include="Adapter\ExpenseListAdapter.cs" />
+    <Compile Include="Adapter\IncomeAdapter.cs" />
     <Compile Include="Adapter\InvestmentAdapter.cs" />
     <Compile Include="App.cs" />
+    <Compile Include="DAL\IncomeRepository.cs" />
+    <Compile Include="Models\Income.cs" />
     <Compile Include="Services\AlarmFireReceiver.cs" />
     <Compile Include="Services\AlarmScheduler.cs" />
     <Compile Include="Services\BootCompletedReceiver.cs" />
     <Compile Include="Services\ExchangeRatesClient.cs" />
     <Compile Include="Services\IExchangeRatesClient.cs" />
+    <Compile Include="Services\IncomeService.cs" />
     <Compile Include="Services\RatesSyncService.cs" />
     <Compile Include="Utils\CardSpacingDecoration.cs" />
     <Compile Include="DAL\BudgetRepository.cs" />
@@ -305,10 +309,19 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="External\" />
-    <Folder Include="pictures\" />
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\drawable\moneymap_logo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\layout\dialog_add_income.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\layout\item_income_row.xml">
+      <SubType>Designer</SubType>
+    </AndroidResource>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.

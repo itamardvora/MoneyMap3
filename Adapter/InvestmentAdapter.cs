@@ -40,6 +40,7 @@ namespace MoneyMap.Adapters
         {
             var itemView = LayoutInflater.From(parent.Context)
                 .Inflate(Resource.Layout.investment_item, parent, false);
+
             return new InvestmentViewHolder(itemView);
         }
 
@@ -56,7 +57,7 @@ namespace MoneyMap.Adapters
             vh.CurrentValueText.Text = row.CurrentValueText;
             vh.PnlText.Text = row.PnlText;
 
-            // צבע רווח/הפסד
+            // צבע רווח / הפסד
             vh.PnlText.SetTextColor(row.IsProfit
                 ? Color.Rgb(0, 150, 0)
                 : Color.Rgb(200, 0, 0));
@@ -80,7 +81,7 @@ namespace MoneyMap.Adapters
         public TextView CostText { get; }
         public TextView CurrentValueText { get; }
         public TextView PnlText { get; }
-        public Button DeleteButton { get; }
+        public TextView DeleteButton { get; }
 
         private Investment _boundItem;
         private Action<Investment> _onDelete;
@@ -94,7 +95,7 @@ namespace MoneyMap.Adapters
             CostText = itemView.FindViewById<TextView>(Resource.Id.costText);
             CurrentValueText = itemView.FindViewById<TextView>(Resource.Id.currentValueText);
             PnlText = itemView.FindViewById<TextView>(Resource.Id.pnlText);
-            DeleteButton = itemView.FindViewById<Button>(Resource.Id.deleteButton);
+            DeleteButton = itemView.FindViewById<TextView>(Resource.Id.deleteButton);
 
             DeleteButton?.SetOnClickListener(this);
         }
@@ -108,7 +109,9 @@ namespace MoneyMap.Adapters
         public void OnClick(View v)
         {
             if (v == DeleteButton)
+            {
                 _onDelete?.Invoke(_boundItem);
+            }
         }
     }
 }

@@ -1,24 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.bottomnavigation.BottomNavigationView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+
+    android:id="@+id/bottomNavigation"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="70dp"
 
-    <!-- רקע יפה לתפריט (גרדיאנט רך) -->
-    <View
-        android:id="@+id/bottomNavBg"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_alignParentBottom="true"
-        android:background="@drawable/bottom_nav_background" />
+    android:background="@drawable/bottom_nav_background"
+    android:elevation="8dp"
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottomNavigation"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_alignBottom="@id/bottomNavBg"
-        android:background="@android:color/transparent"
-        app:menu="@menu/navigation_menu"
-        app:itemIconTint="@color/nav_text_selector"
-        app:itemTextColor="@color/nav_text_selector" />
-</RelativeLayout>
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp"
+
+    app:menu="@menu/navigation_menu"
+    app:itemIconTint="@color/nav_text_selector"
+    app:itemTextColor="@color/nav_text_selector"
+    app:labelVisibilityMode="labeled" />

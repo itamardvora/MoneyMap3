@@ -1,45 +1,110 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#F8FAFC">
 
     <LinearLayout
-        android:orientation="vertical"
-        android:padding="20dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="24dp"
+        android:paddingRight="24dp"
+        android:paddingTop="40dp"
+        android:paddingBottom="24dp">
 
-        <EditText
-            android:id="@+id/fullNameInput"
-            android:hint="Full Name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="יצירת חשבון"
+            android:textColor="#0F172A"
+            android:textSize="28sp"
+            android:textStyle="bold" />
 
-        <EditText
-            android:id="@+id/emailInput"
-            android:hint="Email"
-            android:inputType="textEmailAddress"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="24dp"
+            android:text="מלא את הפרטים כדי להתחיל"
+            android:textColor="#64748B"
+            android:textSize="14sp" />
 
-        <EditText
-            android:id="@+id/passwordInput"
-            android:hint="Password"
-            android:inputType="textPassword"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:background="#FFFFFF"
+            android:elevation="2dp"
+            android:orientation="vertical"
+            android:padding="18dp">
 
-        <EditText
-            android:id="@+id/birthDateInput"
-            android:hint="Birth Date (yyyy-MM-dd)"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            <EditText
+                android:id="@+id/fullNameInput"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginBottom="12dp"
+                android:background="#F8FAFC"
+                android:gravity="center_vertical"
+                android:hint="שם מלא"
+                android:inputType="textPersonName"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:textColor="#0F172A"
+                android:textColorHint="#94A3B8" />
+
+            <EditText
+                android:id="@+id/emailInput"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginBottom="12dp"
+                android:background="#F8FAFC"
+                android:gravity="center_vertical"
+                android:hint="אימייל"
+                android:inputType="textEmailAddress"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:textColor="#0F172A"
+                android:textColorHint="#94A3B8" />
+
+            <EditText
+                android:id="@+id/passwordInput"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginBottom="12dp"
+                android:background="#F8FAFC"
+                android:gravity="center_vertical"
+                android:hint="סיסמה"
+                android:inputType="textPassword"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:textColor="#0F172A"
+                android:textColorHint="#94A3B8" />
+
+            <EditText
+                android:id="@+id/birthDateInput"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginBottom="4dp"
+                android:background="#F8FAFC"
+                android:gravity="center_vertical"
+                android:hint="תאריך לידה (yyyy-MM-dd)"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:textColor="#0F172A"
+                android:textColorHint="#94A3B8" />
+        </LinearLayout>
 
         <Button
             android:id="@+id/registerButton"
-            android:text="הרשם"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp" />
+            android:layout_height="52dp"
+            android:layout_marginTop="20dp"
+            android:backgroundTint="#0F172A"
+            android:text="הרשמה"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
     </LinearLayout>
 </ScrollView>

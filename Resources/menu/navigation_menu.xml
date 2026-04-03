@@ -1,22 +1,19 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
-	<!-- השקעות - ראשון -->
-	<item
-        android:id="@+id/menu_investments"
-        android:icon="@android:drawable/ic_menu_manage"
-        android:title="השקעות" />
-
-	<!-- בית - שני -->
 	<item
         android:id="@+id/menu_home"
-        android:icon="@android:drawable/ic_menu_view"
+        android:icon="@drawable/ic_home"
         android:title="בית" />
 
-	<!-- תקציב - שלישי -->
+	<item
+        android:id="@+id/menu_investments"
+        android:icon="@drawable/ic_investments"
+        android:title="השקעות" />
+
 	<item
         android:id="@+id/menu_budget"
-        android:icon="@android:drawable/ic_menu_agenda"
+        android:icon="@drawable/ic_budget"
         android:title="תקציב" />
 
 </menu>

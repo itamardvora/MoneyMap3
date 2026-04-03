@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background"
-    android:padding="20dp">
+    android:padding="24dp">
 
     <LinearLayout
         android:id="@+id/panel"
@@ -12,45 +12,76 @@
         android:layout_centerInParent="true"
         android:orientation="vertical"
         android:background="@drawable/bg_card"
-        android:padding="18dp">
+        android:padding="22dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="התחברות"
+            android:textColor="#0F172A"
             android:textStyle="bold"
-            android:textSize="20sp"
-            android:layout_marginBottom="12dp" />
+            android:textSize="28sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="20dp"
+            android:text="היכנס כדי להמשיך לניהול התקציב וההשקעות שלך"
+            android:textColor="#64748B"
+            android:textSize="14sp" />
 
         <EditText
             android:id="@+id/emailInput"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="52dp"
+            android:layout_marginBottom="12dp"
+            android:background="#F8FAFC"
+            android:gravity="center_vertical"
             android:hint="אימייל"
             android:inputType="textEmailAddress"
             android:maxLines="1"
-            android:layout_marginBottom="8dp" />
+            android:paddingLeft="14dp"
+            android:paddingRight="14dp"
+            android:textColor="#0F172A"
+            android:textColorHint="#94A3B8" />
 
         <EditText
             android:id="@+id/passwordInput"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="52dp"
+            android:layout_marginBottom="16dp"
+            android:background="#F8FAFC"
+            android:gravity="center_vertical"
             android:hint="סיסמה"
             android:inputType="textPassword"
             android:maxLines="1"
-            android:layout_marginBottom="12dp" />
+            android:paddingLeft="14dp"
+            android:paddingRight="14dp"
+            android:textColor="#0F172A"
+            android:textColorHint="#94A3B8" />
 
         <Button
             android:id="@+id/loginButton"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="כניסה" />
+            android:layout_height="52dp"
+            android:backgroundTint="#0F172A"
+            android:text="כניסה"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold" />
 
         <Button
             android:id="@+id/goToRegisterButton"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
+            android:backgroundTint="#E2E8F0"
             android:text="הרשמה"
-            android:layout_marginTop="8dp" />
+            android:textAllCaps="false"
+            android:textColor="#0F172A"
+            android:textSize="15sp"
+            android:textStyle="bold" />
     </LinearLayout>
 </RelativeLayout>

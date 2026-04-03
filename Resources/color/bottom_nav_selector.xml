@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-	<!-- כשנבחר -->
-	<item
-        android:color="#0EA5E9"
-        android:state_checked="true" />
 
-	<!-- כשלא נבחר -->
-	<item
-        android:color="#9CA3AF"
-        android:state_checked="false" />
+	<!-- נבחר -->
+	<item android:state_checked="true" android:color="#0F172A"/>
+
+	<!-- לא נבחר -->
+	<item android:color="#94A3B8"/>
+
 </selector>

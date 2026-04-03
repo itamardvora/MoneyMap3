@@ -1,44 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="8dp">
+    android:layout_marginBottom="12dp"
+    android:padding="14dp"
+    android:background="#FFFFFF"
+    android:elevation="3dp">
 
+    <!-- תמונת קבלה -->
     <ImageView
         android:id="@+id/imgReceiptThumb"
         android:layout_width="56dp"
         android:layout_height="56dp"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:layout_marginEnd="12dp"
+        android:background="#F1F5F9"
+        android:padding="4dp"
         android:scaleType="centerCrop"
         android:src="@android:drawable/ic_menu_gallery"
-        android:visibility="gone"
-        android:layout_marginEnd="8dp"/>
+        android:visibility="gone" />
 
-    <LinearLayout
-        android:layout_width="1dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical">
-
-        <TextView
-            android:id="@+id/tvExpenseDate"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="01.11.2025"
-            android:textStyle="bold"/>
-
-        <TextView
-            android:id="@+id/tvExpenseReason"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="סיבה" />
-    </LinearLayout>
-
+    <!-- סכום -->
     <TextView
         android:id="@+id/tvExpenseAmount"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="0 ₪"
-        android:textStyle="bold"
-        android:layout_gravity="center_vertical"/>
-</LinearLayout>
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:text="₪ 0"
+        android:textColor="#DC2626"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <!-- טקסטים -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@id/imgReceiptThumb"
+        android:layout_toStartOf="@id/tvExpenseAmount"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvExpenseReason"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="סיבה"
+            android:textColor="#0F172A"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/tvExpenseDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="01.11.2025"
+            android:textColor="#64748B"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+</RelativeLayout>

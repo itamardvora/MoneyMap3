@@ -27,7 +27,7 @@ namespace MoneyMap.Activities
         protected override async void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
-            Platform.Init(this, savedInstanceState); // ✅ חובה ל-MediaPicker
+            Platform.Init(this, savedInstanceState);
             SetContentView(Resource.Layout.activity_home);
 
             _helloUser = FindViewById<TextView>(Resource.Id.helloUserText);
@@ -36,8 +36,6 @@ namespace MoneyMap.Activities
             _portfolioValue = FindViewById<TextView>(Resource.Id.homePortfolioValueText);
             _portfolioPnL = FindViewById<TextView>(Resource.Id.homePortfolioPnlText);
             _currencySpinner = FindViewById<Spinner>(Resource.Id.currencySpinner);
-
-            // ✅ הכפתור החדש
             _addExpenseButton = FindViewById<Button>(Resource.Id.homeAddExpenseButton);
 
             WireBottomNavigation();
@@ -55,8 +53,19 @@ namespace MoneyMap.Activities
         protected override async void OnResume()
         {
             base.OnResume();
-            await SyncSpinnerSelectionFromSettingsAsync();
-            await LoadAll();
+
+            try
+            {
+                if (!App.IsFullyReady())
+                    await App.InitAfterLoginAsync();
+
+                await SyncSpinnerSelectionFromSettingsAsync();
+                await LoadAll();
+            }
+            catch (Exception ex)
+            {
+                Toast.MakeText(this, "שגיאה בטעינת מסך הבית: " + ex.Message, ToastLength.Long).Show();
+            }
         }
 
         private void WireBottomNavigation()
@@ -70,12 +79,17 @@ namespace MoneyMap.Activities
                 e.Handled = true;
                 switch (e.Item.ItemId)
                 {
-                    case Resource.Id.menu_home: break;
-                    case Resource.Id.menu_investments:
-                        if (!(this is InvestmentActivity)) StartActivity(typeof(InvestmentActivity));
+                    case Resource.Id.menu_home:
                         break;
+
+                    case Resource.Id.menu_investments:
+                        if (!(this is InvestmentActivity))
+                            StartActivity(typeof(InvestmentActivity));
+                        break;
+
                     case Resource.Id.menu_budget:
-                        if (!(this is BudgetActivity)) StartActivity(typeof(BudgetActivity));
+                        if (!(this is BudgetActivity))
+                            StartActivity(typeof(BudgetActivity));
                         break;
                 }
             };
@@ -83,6 +97,9 @@ namespace MoneyMap.Activities
 
         private void SetupCurrencySpinner()
         {
+            if (_currencySpinner == null)
+                return;
+
             var adapter = new ArrayAdapter<string>(this, Android.Resource.Layout.SimpleSpinnerItem, _currencyOptions);
             adapter.SetDropDownViewResource(Android.Resource.Layout.SimpleSpinnerDropDownItem);
             _currencySpinner.Adapter = adapter;
@@ -130,11 +147,16 @@ namespace MoneyMap.Activities
                 if (App.CurrencyService != null)
                     await App.CurrencyService.EnsureBaseRatesAsync();
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         private async Task SyncSpinnerSelectionFromSettingsAsync()
         {
+            if (_currencySpinner == null)
+                return;
+
             var code = await SafePreferredCodeAsync();
             var idx = Array.IndexOf(_currencyOptions, code);
             if (idx < 0) idx = 0;
@@ -146,7 +168,9 @@ namespace MoneyMap.Activities
 
         private async Task LoadAll()
         {
-            _helloUser.Text = $"שלום, {UserSession.LoggedInUserName ?? "משתמש"}";
+            if (_helloUser != null)
+                _helloUser.Text = $"שלום, {UserSession.LoggedInUserName ?? "משתמש"}";
+
             await LoadBudgetSummary();
             await LoadInvestmentSummary();
         }
@@ -154,6 +178,7 @@ namespace MoneyMap.Activities
         private async Task<string> SafePreferredCodeAsync()
         {
             var code = Preferences.Get("PreferredCurrencyCode", "ILS");
+
             try
             {
                 if (App.CurrencyService != null)
@@ -166,38 +191,73 @@ namespace MoneyMap.Activities
                     }
                 }
             }
-            catch { }
+            catch
+            {
+            }
+
             return code;
         }
 
         private async Task<string> SafeFormatAsync(decimal amountIls, int decimals = 2)
         {
             var code = Preferences.Get("PreferredCurrencyCode", "ILS");
+
             try
             {
                 if (App.CurrencyService != null)
                     return await App.CurrencyService.FormatAsync(amountIls, "ILS", code, decimals);
             }
-            catch { }
+            catch
+            {
+            }
 
             return amountIls.ToString("N" + decimals) + " ₪";
         }
 
         private async Task LoadBudgetSummary()
         {
-            int userId = UserSession.LoggedInUserId ?? 0;
-            var month = DateTime.Now;
+            try
+            {
+                if (_budgetTotal == null || _budgetRemaining == null)
+                    return;
 
-            var summaries = await App.BudgetService.GetUserBudgetStatus(userId, month);
-            decimal total = summaries.Sum(s => s.MonthlyLimit);
-            decimal spent = summaries.Sum(s => s.Spent);
-            decimal remaining = total - spent;
+                if (App.BudgetService == null)
+                {
+                    _budgetTotal.Text = "סה״כ: 0 ₪";
+                    _budgetRemaining.Text = "יתרה: 0 ₪";
+                    return;
+                }
 
-            _budgetTotal.Text = "סה״כ: " + await SafeFormatAsync(total);
-            _budgetRemaining.Text = "יתרה: " + await SafeFormatAsync(remaining);
+                int userId = UserSession.LoggedInUserId ?? 0;
+                var month = DateTime.Now;
+
+                var summaries = await App.BudgetService.GetUserBudgetStatus(userId, month);
+                if (summaries == null)
+                {
+                    _budgetTotal.Text = "סה״כ: 0 ₪";
+                    _budgetRemaining.Text = "יתרה: 0 ₪";
+                    return;
+                }
+
+                decimal total = summaries.Sum(s => s.MonthlyLimit);
+                decimal spent = summaries.Sum(s => s.Spent);
+                decimal remaining = total - spent;
+
+                _budgetTotal.Text = "סה״כ: " + await SafeFormatAsync(total);
+                _budgetRemaining.Text = "יתרה: " + await SafeFormatAsync(remaining);
+            }
+            catch (Exception ex)
+            {
+                if (_budgetTotal != null)
+                    _budgetTotal.Text = "סה״כ: 0 ₪";
+
+                if (_budgetRemaining != null)
+                    _budgetRemaining.Text = "יתרה: 0 ₪";
+
+                Toast.MakeText(this, "שגיאה בטעינת התקציב: " + ex.Message, ToastLength.Long).Show();
+            }
         }
 
-        // ✅ הוספת הוצאה ישירות מהבית
         private async void ShowAddExpenseDialog()
         {
             try
@@ -217,6 +277,13 @@ namespace MoneyMap.Activities
                 var previewImg = dialogView.FindViewById<ImageView>(Resource.Id.receiptPreviewImage);
                 var confirmBtn = dialogView.FindViewById<Button>(Resource.Id.confirmAddExpenseButton);
 
+                if (dateInput == null || reasonInput == null || amountInput == null ||
+                    categorySpinner == null || captureBtn == null || previewImg == null || confirmBtn == null)
+                {
+                    Toast.MakeText(this, "שגיאה: dialog_add_expense לא תואם לקוד", ToastLength.Long).Show();
+                    return;
+                }
+
                 dateInput.Text = DateTime.Today.ToString("yyyy-MM-dd");
                 dateInput.Focusable = false;
                 dateInput.Click += (s, e) =>
@@ -230,7 +297,20 @@ namespace MoneyMap.Activities
                 };
 
                 int userId = UserSession.LoggedInUserId ?? 0;
+
+                if (App.CategoryService == null)
+                {
+                    Toast.MakeText(this, "CategoryService לא מאותחל", ToastLength.Long).Show();
+                    return;
+                }
+
                 var categories = await App.CategoryService.GetCategoriesForUser(userId);
+                if (categories == null)
+                {
+                    Toast.MakeText(this, "לא נמצאו קטגוריות", ToastLength.Short).Show();
+                    return;
+                }
+
                 var names = categories.Select(c => c.CategoryName).ToList();
                 categorySpinner.Adapter = new ArrayAdapter<string>(
                     this, Android.Resource.Layout.SimpleSpinnerItem, names);
@@ -295,7 +375,7 @@ namespace MoneyMap.Activities
                 {
                     try
                     {
-                        if (categorySpinner.SelectedItemPosition < 0)
+                        if (categorySpinner.SelectedItemPosition < 0 || categorySpinner.SelectedItemPosition >= categories.Count)
                         {
                             Toast.MakeText(this, "בחר קטגוריה", ToastLength.Short).Show();
                             return;
@@ -313,9 +393,14 @@ namespace MoneyMap.Activities
                             return;
                         }
 
+                        if (App.ExpenseService == null)
+                        {
+                            Toast.MakeText(this, "ExpenseService לא מאותחל", ToastLength.Long).Show();
+                            return;
+                        }
+
                         var selectedCategory = categories[categorySpinner.SelectedItemPosition];
 
-                        // המשתמש מקליד במטבע תצוגה — במסד שומרים תמיד ILS
                         decimal amountIls = amountInDisplayCurrency;
                         var preferred = await SafePreferredCodeAsync();
 
@@ -328,7 +413,9 @@ namespace MoneyMap.Activities
                                 if (rate.HasValue && rate.Value > 0m)
                                     amountIls = amountInDisplayCurrency * rate.Value;
                             }
-                            catch { }
+                            catch
+                            {
+                            }
                         }
 
                         await App.ExpenseService.AddExpense(
@@ -340,7 +427,7 @@ namespace MoneyMap.Activities
                             receiptPath
                         );
 
-                        await LoadBudgetSummary(); // ✅ רענון סיכום התקציב בבית
+                        await LoadBudgetSummary();
                         dialog.Dismiss();
                     }
                     catch (Exception ex)
@@ -357,35 +444,69 @@ namespace MoneyMap.Activities
 
         private async Task LoadInvestmentSummary()
         {
-            int userId = UserSession.LoggedInUserId ?? 0;
-
-            var totalValueIls = await App.PortfolioService.GetPortfolioTotalValueAsync(userId);
-            _portfolioValue.Text = "שווי תיק: " + await SafeFormatAsync(totalValueIls);
-
-            decimal totalPnlIls = 0m;
-            int failedSymbols = 0;
-
             try
             {
-                var list = await App.InvestmentService.GetInvestmentsForUserAsync(userId);
-                foreach (var inv in list)
+                if (_portfolioValue == null || _portfolioPnL == null)
+                    return;
+
+                if (App.PortfolioService == null)
                 {
-                    try
-                    {
-                        var current = await App.StockPriceService.GetPriceOrFetch(inv.StockSymbol);
-                        var curVal = (decimal)current * inv.Quantity;
-                        var cost = inv.BuyPrice * inv.Quantity;
-                        totalPnlIls += (curVal - cost);
-                    }
-                    catch { failedSymbols++; }
+                    _portfolioValue.Text = "שווי תיק: 0 ₪";
+                    _portfolioPnL.Text = "רווח/הפסד: 0 ₪";
+                    return;
                 }
+
+                int userId = UserSession.LoggedInUserId ?? 0;
+
+                var totalValueIls = await App.PortfolioService.GetPortfolioTotalValueAsync(userId);
+                _portfolioValue.Text = "שווי תיק: " + await SafeFormatAsync(totalValueIls);
+
+                decimal totalPnlIls = 0m;
+                int failedSymbols = 0;
+
+                try
+                {
+                    if (App.InvestmentService != null && App.StockPriceService != null)
+                    {
+                        var list = await App.InvestmentService.GetInvestmentsForUserAsync(userId);
+                        if (list != null)
+                        {
+                            foreach (var inv in list)
+                            {
+                                try
+                                {
+                                    var current = await App.StockPriceService.GetPriceOrFetch(inv.StockSymbol);
+                                    var curVal = (decimal)current * inv.Quantity;
+                                    var cost = inv.BuyPrice * inv.Quantity;
+                                    totalPnlIls += (curVal - cost);
+                                }
+                                catch
+                                {
+                                    failedSymbols++;
+                                }
+                            }
+                        }
+                    }
+                }
+                catch
+                {
+                }
+
+                _portfolioPnL.Text = "רווח/הפסד: " + await SafeFormatAsync(totalPnlIls);
+
+                if (failedSymbols > 0)
+                    Toast.MakeText(this, $"הערה: {failedSymbols} סמלים לא חושבו (API/רשת).", ToastLength.Short).Show();
             }
-            catch { }
+            catch (Exception ex)
+            {
+                if (_portfolioValue != null)
+                    _portfolioValue.Text = "שווי תיק: 0 ₪";
 
-            _portfolioPnL.Text = "רווח/הפסד: " + await SafeFormatAsync(totalPnlIls);
+                if (_portfolioPnL != null)
+                    _portfolioPnL.Text = "רווח/הפסד: 0 ₪";
 
-            if (failedSymbols > 0)
-                Toast.MakeText(this, $"הערה: {failedSymbols} סמלים לא חושבו (API/רשת).", ToastLength.Short).Show();
+                Toast.MakeText(this, "שגיאה בטעינת ההשקעות: " + ex.Message, ToastLength.Long).Show();
+            }
         }
 
         public override void OnRequestPermissionsResult(

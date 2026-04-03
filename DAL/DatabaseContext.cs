@@ -10,32 +10,30 @@ namespace MoneyMap.DAL
 {
     public static class DatabaseContext
     {
-        private static SQLiteAsyncConnection _database;// משתנה שיש בוא את החיבור לדאטה בייס
-        
-        private static readonly SemaphoreSlim _initLock = new SemaphoreSlim(1, 1);// דואג שיהיה כל פעם רק THEARD אחד ולא כמה מאתחלים את הDB 
-        private static bool _initialized = false;// בודק האם הטבלאות מאותחלות 
+        private static SQLiteAsyncConnection _database;
+        private static readonly SemaphoreSlim _initLock = new SemaphoreSlim(1, 1);
+        private static bool _initialized = false;
 
         public static SQLiteAsyncConnection GetConnection()
         {
             if (_database == null)
-                throw new InvalidOperationException("DatabaseContext was not initialized(מאותחל). Call InitAsync() first.");
+                throw new InvalidOperationException("DatabaseContext was not initialized. Call InitAsync() first.");
+
             return _database;
         }
-        /// אתחול הבסיס נתונים. יוצר קובץ DB אם צריך וטבלאות. 
-        
 
         public static async Task InitAsync()
         {
             if (_initialized) return;
+
             await _initLock.WaitAsync();
             try
             {
-                if (_initialized) return;// אם דאטה בייס מאותחל לא לעשות כלום
+                if (_initialized) return;
 
-                var databasePath = Path.Combine(FileSystem.AppDataDirectory, "MoneyMap.db3"); //יצרית הדאטה בייס במידה ולא קיים
+                var databasePath = Path.Combine(FileSystem.AppDataDirectory, "MoneyMap.db3");
                 _database = new SQLiteAsyncConnection(databasePath);
 
-                // יצירת טבלאות שלא קיימות 
                 await _database.CreateTableAsync<User>();
                 await _database.CreateTableAsync<Investment>();
                 await _database.CreateTableAsync<Budget>();
@@ -44,6 +42,9 @@ namespace MoneyMap.DAL
                 await _database.CreateTableAsync<StockPrices>();
                 await _database.CreateTableAsync<UserSettings>();
                 await _database.CreateTableAsync<CurrencyRate>();
+
+                // חדש: טבלת הכנסות
+                await _database.CreateTableAsync<Income>();
 
                 _initialized = true;
             }

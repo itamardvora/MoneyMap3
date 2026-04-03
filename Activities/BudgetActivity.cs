@@ -23,11 +23,28 @@ namespace MoneyMap.Activities
         Exported = false)]
     public class BudgetActivity : AppCompatActivity, IBudgetItemListener
     {
-        private TextView _totalBudgetText, _totalRemainingText;
+        private TextView _currentMonthText;
+        private TextView _totalIncomeText;
+        private TextView _totalBudgetText;
+        private TextView _totalSpentText;
+        private TextView _totalRemainingText;
+
         private ProgressBar _totalProgressBar;
-        private Button _addExpenseButton, _addBudgetButton;
+
+        private ImageButton _previousMonthButton;
+        private ImageButton _nextMonthButton;
+
+        private Button _addIncomeButton;
+        private Button _addExpenseButton;
+        private Button _addBudgetBottomButton;
+
         private RecyclerView _categoryRecyclerView;
         private FormattedBudgetAdapter _adapter;
+
+        private RecyclerView _incomeRecyclerView;
+        private IncomeAdapter _incomeAdapter;
+
+        private DateTime _selectedMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
 
         protected override async void OnCreate(Bundle savedInstanceState)
         {
@@ -38,19 +55,16 @@ namespace MoneyMap.Activities
             WireBottomNavigation();
             await EnsureUserSessionAsync();
 
-            _totalBudgetText = FindViewById<TextView>(Resource.Id.totalBudgetText);
-            _totalRemainingText = FindViewById<TextView>(Resource.Id.totalRemainingText);
-            _totalProgressBar = FindViewById<ProgressBar>(Resource.Id.totalProgressBar);
-            _addExpenseButton = FindViewById<Button>(Resource.Id.addExpenseButton);
-            _addBudgetButton = FindViewById<Button>(Resource.Id.addBudgetButton);
-            _categoryRecyclerView = FindViewById<RecyclerView>(Resource.Id.categoryRecyclerView);
+            BindViews();
+            WireEvents();
 
             _categoryRecyclerView.SetLayoutManager(new LinearLayoutManager(this));
             _adapter = new FormattedBudgetAdapter(new List<FormattedBudgetRow>(), this);
             _categoryRecyclerView.SetAdapter(_adapter);
 
-            _addExpenseButton.Click += (s, e) => ShowAddExpenseDialog();
-            _addBudgetButton.Click += (s, e) => ShowAddBudgetDialog();
+            _incomeRecyclerView.SetLayoutManager(new LinearLayoutManager(this));
+            _incomeAdapter = new IncomeAdapter(new List<Income>());
+            _incomeRecyclerView.SetAdapter(_incomeAdapter);
 
             await LoadBudgetSummary();
         }
@@ -59,6 +73,47 @@ namespace MoneyMap.Activities
         {
             base.OnResume();
             await LoadBudgetSummary();
+        }
+
+        private void BindViews()
+        {
+            _currentMonthText = FindViewById<TextView>(Resource.Id.currentMonthText);
+
+            _totalIncomeText = FindViewById<TextView>(Resource.Id.totalIncomeText);
+            _totalBudgetText = FindViewById<TextView>(Resource.Id.totalBudgetText);
+            _totalSpentText = FindViewById<TextView>(Resource.Id.totalSpentText);
+            _totalRemainingText = FindViewById<TextView>(Resource.Id.totalRemainingText);
+
+            _totalProgressBar = FindViewById<ProgressBar>(Resource.Id.totalProgressBar);
+
+            _previousMonthButton = FindViewById<ImageButton>(Resource.Id.previousMonthButton);
+            _nextMonthButton = FindViewById<ImageButton>(Resource.Id.nextMonthButton);
+
+            _addIncomeButton = FindViewById<Button>(Resource.Id.addIncomeButton);
+            _addExpenseButton = FindViewById<Button>(Resource.Id.addExpenseButton);
+            _addBudgetBottomButton = FindViewById<Button>(Resource.Id.addBudgetBottomButton);
+
+            _categoryRecyclerView = FindViewById<RecyclerView>(Resource.Id.categoryRecyclerView);
+            _incomeRecyclerView = FindViewById<RecyclerView>(Resource.Id.incomeRecyclerView);
+        }
+
+        private void WireEvents()
+        {
+            _previousMonthButton.Click += async (s, e) =>
+            {
+                _selectedMonth = _selectedMonth.AddMonths(-1);
+                await LoadBudgetSummary();
+            };
+
+            _nextMonthButton.Click += async (s, e) =>
+            {
+                _selectedMonth = _selectedMonth.AddMonths(1);
+                await LoadBudgetSummary();
+            };
+
+            _addIncomeButton.Click += (s, e) => ShowAddIncomeDialog();
+            _addExpenseButton.Click += (s, e) => ShowAddExpenseDialog();
+            _addBudgetBottomButton.Click += (s, e) => ShowAddBudgetDialog();
         }
 
         private void WireBottomNavigation()
@@ -79,7 +134,6 @@ namespace MoneyMap.Activities
                         if (!(this is InvestmentActivity)) StartActivity(typeof(InvestmentActivity));
                         break;
                     case Resource.Id.menu_budget:
-                        // כבר כאן
                         break;
                 }
             };
@@ -87,7 +141,6 @@ namespace MoneyMap.Activities
 
         private async Task EnsureUserSessionAsync()
         {
-            // שחזור משתמש אם צריך
             if (!(UserSession.LoggedInUserId.HasValue && UserSession.LoggedInUserId.Value > 0))
             {
                 var savedId = Preferences.Get("LoggedInUserId", 0);
@@ -105,7 +158,6 @@ namespace MoneyMap.Activities
                 }
             }
 
-            // אתחול מלא אחרי התחברות (במקום InitAsync הישן)
             if (!App.IsFullyReady())
                 await App.InitAfterLoginAsync();
         }
@@ -113,35 +165,162 @@ namespace MoneyMap.Activities
         private async Task LoadBudgetSummary()
         {
             int userId = UserSession.LoggedInUserId ?? 0;
-            var summaries = await App.BudgetService.GetUserBudgetStatus(userId, DateTime.Now);
 
+            _currentMonthText.Text = GetHebrewMonthTitle(_selectedMonth);
+
+            var summaries = await App.BudgetService.GetUserBudgetStatus(userId, _selectedMonth);
+            var expenses = await App.ExpenseService.GetMonthlyExpenses(userId, _selectedMonth);
+            var incomes = await App.IncomeService.GetMonthlyIncomes(userId, _selectedMonth);
+
+            decimal totalIncome = incomes.Sum(i => i.Amount);
             decimal totalBudget = summaries.Sum(s => s.MonthlyLimit);
-            decimal totalUsed = summaries.Sum(s => s.Spent);
-            decimal remaining = totalBudget - totalUsed;
+            decimal totalSpent = expenses.Sum(e => e.Amount);
+            decimal remaining = totalIncome - totalSpent;
 
-            _totalBudgetText.Text = "תקציב כולל: " + await SafeFormatAsync(totalBudget, 2);
-            _totalRemainingText.Text = "יתרה כוללת: " + await SafeFormatAsync(remaining, 2);
-            _totalProgressBar.Progress = totalBudget > 0 ? (int)Math.Min(100, (double)(totalUsed / totalBudget * 100m)) : 0;
+            _totalIncomeText.Text = await SafeFormatAsync(totalIncome, 2);
+            _totalBudgetText.Text = await SafeFormatAsync(totalBudget, 2);
+            _totalSpentText.Text = await SafeFormatAsync(totalSpent, 2);
+            _totalRemainingText.Text = await SafeFormatAsync(remaining, 2);
+
+            _totalProgressBar.Progress = totalBudget > 0m
+                ? (int)Math.Min(100, (double)(totalSpent / totalBudget * 100m))
+                : 0;
 
             var preferred = await SafePreferredCodeAsync();
 
             var rows = new List<FormattedBudgetRow>();
-            foreach (var s in summaries)
+            foreach (var s in summaries.OrderBy(x => x.CategoryName))
             {
                 rows.Add(new FormattedBudgetRow
                 {
                     CategoryID = s.CategoryID,
                     CategoryName = s.CategoryName,
-                    PlannedText = $"מתוכנן: {await SafeFormatFromIlsAsync(s.MonthlyLimit, preferred, 2)}",
-                    SpentText = $"הוצאה: {await SafeFormatFromIlsAsync(s.Spent, preferred, 2)}",
-                    RemainingText = $"נותר: {await SafeFormatFromIlsAsync(s.Remaining, preferred, 2)}",
-                    Progress = s.MonthlyLimit > 0 ? (int)Math.Min(100, (double)(s.Spent / s.MonthlyLimit * 100m)) : 0
+                    PlannedText = await SafeFormatFromIlsAsync(s.MonthlyLimit, preferred, 0),
+                    SpentText = await SafeFormatFromIlsAsync(s.Spent, preferred, 0),
+                    RemainingText = await SafeFormatFromIlsAsync(s.Remaining, preferred, 0),
+                    Progress = s.MonthlyLimit > 0
+                        ? (int)Math.Round((double)(s.Spent / s.MonthlyLimit * 100m))
+                        : 0
                 });
             }
+
             _adapter.UpdateData(rows);
+            _incomeAdapter.Update(incomes.OrderByDescending(i => i.Date).ToList());
         }
 
-        // ===== דיאלוג: הוספת תקציב =====
+        private string GetHebrewMonthTitle(DateTime date)
+        {
+            var monthNames = new[]
+            {
+                "",
+                "ינואר",
+                "פברואר",
+                "מרץ",
+                "אפריל",
+                "מאי",
+                "יוני",
+                "יולי",
+                "אוגוסט",
+                "ספטמבר",
+                "אוקטובר",
+                "נובמבר",
+                "דצמבר"
+            };
+
+            return $"{monthNames[date.Month]} {date.Year}";
+        }
+
+        private async void ShowAddIncomeDialog()
+        {
+            var dialogView = LayoutInflater.Inflate(Resource.Layout.dialog_add_income, null);
+
+            var builder = new AndroidX.AppCompat.App.AlertDialog.Builder(this)
+                .SetTitle("הוסף הכנסה")
+                .SetView(dialogView)
+                .SetNegativeButton("ביטול", (s, e) => { });
+
+            var dateInput = dialogView.FindViewById<EditText>(Resource.Id.incomeDateInput);
+            var sourceInput = dialogView.FindViewById<EditText>(Resource.Id.incomeSourceInput);
+            var amountInput = dialogView.FindViewById<EditText>(Resource.Id.incomeAmountInput);
+            var confirmBtn = dialogView.FindViewById<Button>(Resource.Id.confirmAddIncomeButton);
+
+            dateInput.Text = _selectedMonth.ToString("yyyy-MM-01");
+            dateInput.Focusable = false;
+
+            dateInput.Click += (s, e) =>
+            {
+                var t = _selectedMonth;
+                var dp = new DatePickerDialog(this, (sender, ev) =>
+                {
+                    dateInput.Text = ev.Date.ToString("yyyy-MM-dd");
+                }, t.Year, t.Month - 1, 1);
+                dp.Show();
+            };
+
+            var dialog = builder.Create();
+            dialog.Show();
+
+            confirmBtn.Click += async (s, e) =>
+            {
+                try
+                {
+                    int userId = UserSession.LoggedInUserId ?? 0;
+
+                    if (!DateTime.TryParse(dateInput.Text, out var date))
+                    {
+                        Toast.MakeText(this, "תאריך לא תקין", ToastLength.Short).Show();
+                        return;
+                    }
+
+                    if (!decimal.TryParse(amountInput.Text, out var amountInDisplayCurrency) || amountInDisplayCurrency <= 0)
+                    {
+                        Toast.MakeText(this, "סכום לא תקין", ToastLength.Short).Show();
+                        return;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(sourceInput.Text))
+                    {
+                        Toast.MakeText(this, "יש להזין מקור הכנסה", ToastLength.Short).Show();
+                        return;
+                    }
+
+                    decimal amountIls = amountInDisplayCurrency;
+                    var preferred = await SafePreferredCodeAsync();
+
+                    if (!string.Equals(preferred, "ILS", StringComparison.OrdinalIgnoreCase) &&
+                        App.CurrencyService != null)
+                    {
+                        try
+                        {
+                            var rate = await App.CurrencyService.GetRateAsync(preferred, "ILS");
+                            if (rate.HasValue && rate.Value > 0m)
+                            {
+                                amountIls = amountInDisplayCurrency * rate.Value;
+                            }
+                        }
+                        catch
+                        {
+                        }
+                    }
+
+                    await App.IncomeService.AddIncome(
+                        userId,
+                        amountIls,
+                        sourceInput.Text,
+                        date
+                    );
+
+                    _selectedMonth = new DateTime(date.Year, date.Month, 1);
+                    await LoadBudgetSummary();
+                    dialog.Dismiss();
+                }
+                catch (Exception ex)
+                {
+                    Toast.MakeText(this, "שגיאה בהוספה: " + ex.Message, ToastLength.Long).Show();
+                }
+            };
+        }
+
         private async void ShowAddBudgetDialog()
         {
             var dialogView = LayoutInflater.Inflate(Resource.Layout.dialog_add_budget, null);
@@ -156,12 +335,12 @@ namespace MoneyMap.Activities
             var categorySpinner = dialogView.FindViewById<Spinner>(Resource.Id.budgetCategorySpinner);
             var confirmBtn = dialogView.FindViewById<Button>(Resource.Id.confirmAddBudgetButton);
 
-            // ברירת מחדל: היום הראשון של החודש הנוכחי
-            monthInput.Text = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).ToString("yyyy-MM-01");
+            monthInput.Text = new DateTime(_selectedMonth.Year, _selectedMonth.Month, 1).ToString("yyyy-MM-01");
             monthInput.Focusable = false;
+
             monthInput.Click += (s, e) =>
             {
-                var t = DateTime.Today;
+                var t = _selectedMonth;
                 var dp = new DatePickerDialog(this, (sender, ev) =>
                 {
                     var d = new DateTime(ev.Date.Year, ev.Date.Month, 1);
@@ -175,8 +354,9 @@ namespace MoneyMap.Activities
             var names = categories.Select(c => c.CategoryName).ToList();
             names.Add("➕ קטגוריה חדשה");
 
-            categorySpinner.Adapter = new ArrayAdapter<string>(
-                this, Android.Resource.Layout.SimpleSpinnerItem, names);
+            var spinnerAdapter = new ArrayAdapter<string>(this, Android.Resource.Layout.SimpleSpinnerItem, names);
+            spinnerAdapter.SetDropDownViewResource(Android.Resource.Layout.SimpleSpinnerDropDownItem);
+            categorySpinner.Adapter = spinnerAdapter;
 
             var dialog = builder.Create();
             dialog.Show();
@@ -196,7 +376,7 @@ namespace MoneyMap.Activities
                             {
                                 await App.CategoryService.AddCategory(newName, userId);
                                 dialog.Dismiss();
-                                ShowAddBudgetDialog(); // פותח מחדש עם הרשימה המעודכנת
+                                ShowAddBudgetDialog();
                             }
                             else
                             {
@@ -224,11 +404,12 @@ namespace MoneyMap.Activities
 
                     if (!monthOk || !limitOk || monthlyLimit <= 0)
                     {
-                        Toast.MakeText(this, "תאריך/סכום לא תקינים", ToastLength.Short).Show();
+                        Toast.MakeText(this, "תאריך או סכום לא תקינים", ToastLength.Short).Show();
                         return;
                     }
 
                     await App.BudgetService.AddUserBudget(userId, categories[idx].CategoryID, monthlyLimit, month);
+                    _selectedMonth = new DateTime(month.Year, month.Month, 1);
                     await LoadBudgetSummary();
                     dialog.Dismiss();
                 }
@@ -239,7 +420,6 @@ namespace MoneyMap.Activities
             };
         }
 
-        // ===== דיאלוג: הוספת הוצאה =====
         private async void ShowAddExpenseDialog()
         {
             var dialogView = LayoutInflater.Inflate(Resource.Layout.dialog_add_expense, null);
@@ -257,23 +437,26 @@ namespace MoneyMap.Activities
             var previewImg = dialogView.FindViewById<ImageView>(Resource.Id.receiptPreviewImage);
             var confirmBtn = dialogView.FindViewById<Button>(Resource.Id.confirmAddExpenseButton);
 
-            dateInput.Text = DateTime.Today.ToString("yyyy-MM-dd");
+            dateInput.Text = _selectedMonth.ToString("yyyy-MM-01");
             dateInput.Focusable = false;
+
             dateInput.Click += (s, e) =>
             {
-                var t = DateTime.Today;
+                var t = _selectedMonth;
                 var dp = new DatePickerDialog(this, (sender, ev) =>
                 {
                     dateInput.Text = ev.Date.ToString("yyyy-MM-dd");
-                }, t.Year, t.Month - 1, t.Day);
+                }, t.Year, t.Month - 1, 1);
                 dp.Show();
             };
 
             int userId = UserSession.LoggedInUserId ?? 0;
             var categories = await App.CategoryService.GetCategoriesForUser(userId);
             var names = categories.Select(c => c.CategoryName).ToList();
-            categorySpinner.Adapter = new ArrayAdapter<string>(
-                this, Android.Resource.Layout.SimpleSpinnerItem, names);
+
+            var spinnerAdapter = new ArrayAdapter<string>(this, Android.Resource.Layout.SimpleSpinnerItem, names);
+            spinnerAdapter.SetDropDownViewResource(Android.Resource.Layout.SimpleSpinnerDropDownItem);
+            categorySpinner.Adapter = spinnerAdapter;
 
             string receiptPath = null;
 
@@ -324,7 +507,7 @@ namespace MoneyMap.Activities
                 }
                 catch (Exception ex)
                 {
-                    Toast.MakeText(this, "שגיאה בצילום/בחירה: " + ex.Message, ToastLength.Long).Show();
+                    Toast.MakeText(this, "שגיאה בצילום או בחירה: " + ex.Message, ToastLength.Long).Show();
                 }
             };
 
@@ -355,25 +538,19 @@ namespace MoneyMap.Activities
 
                     var selectedCategory = categories[categorySpinner.SelectedItemPosition];
 
-                    // כאן ההמרה: המשתמש הקליד במטבע שמופיע לו באפליקציה (ILS / USD / EUR),
-                    // ואנחנו שומרים למסד תמיד ב-ILS.
                     decimal amountIls = amountInDisplayCurrency;
                     var preferred = await SafePreferredCodeAsync();
 
-                    if (!string.Equals(preferred, "ILS", StringComparison.OrdinalIgnoreCase) &&
-                        App.CurrencyService != null)
+                    if (!string.Equals(preferred, "ILS", StringComparison.OrdinalIgnoreCase) && App.CurrencyService != null)
                     {
                         try
                         {
                             var rate = await App.CurrencyService.GetRateAsync(preferred, "ILS");
                             if (rate.HasValue && rate.Value > 0m)
-                            {
                                 amountIls = amountInDisplayCurrency * rate.Value;
-                            }
                         }
                         catch
                         {
-                            // במקרה כישלון רשת – נשאר עם הערך כמו שהוא (לא נתקע את המשתמש)
                         }
                     }
 
@@ -386,6 +563,7 @@ namespace MoneyMap.Activities
                         receiptPath
                     );
 
+                    _selectedMonth = new DateTime(date.Year, date.Month, 1);
                     await LoadBudgetSummary();
                     dialog.Dismiss();
                 }
@@ -396,7 +574,6 @@ namespace MoneyMap.Activities
             };
         }
 
-        // ========= עוזרי פורמט בטוחים =========
         private async Task<string> SafePreferredCodeAsync()
         {
             try
@@ -408,6 +585,7 @@ namespace MoneyMap.Activities
                 }
             }
             catch { }
+
             return "ILS";
         }
 
@@ -420,6 +598,7 @@ namespace MoneyMap.Activities
                     return await App.CurrencyService.FormatAsync(amountIls, "ILS", code, decimals);
             }
             catch { }
+
             return amountIls.ToString("N" + decimals) + " ₪";
         }
 
@@ -431,18 +610,15 @@ namespace MoneyMap.Activities
                     return await App.CurrencyService.FormatAsync(amountIls, "ILS", target, decimals);
             }
             catch { }
+
             return amountIls.ToString("N" + decimals) + " ₪";
         }
 
-        // ===== ניווט להוצאות של קטגוריה =====
         public void OnViewExpenses(int categoryId, string categoryName)
         {
             var intent = new Android.Content.Intent(this, typeof(CategoryExpensesActivity));
             intent.PutExtra(CategoryExpensesActivity.ExtraCategoryId, categoryId);
-
-            var month = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-            intent.PutExtra(CategoryExpensesActivity.ExtraMonthIso, month.ToString("yyyy-MM-01"));
-
+            intent.PutExtra(CategoryExpensesActivity.ExtraMonthIso, _selectedMonth.ToString("yyyy-MM-01"));
             StartActivity(intent);
         }
 
