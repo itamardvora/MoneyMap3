@@ -3,7 +3,6 @@ using Android.App;
 using Android.OS;
 using Android.Widget;
 using Xamarin.Essentials;
-using MoneyMap.Services;
 
 namespace MoneyMap.Activities
 {
@@ -35,7 +34,6 @@ namespace MoneyMap.Activities
             _birthDateInput = FindViewById<EditText>(Resource.Id.birthDateInput);
             _registerButton = FindViewById<Button>(Resource.Id.registerButton);
 
-            // בחירת תאריך נוחה
             _birthDateInput.Text = DateTime.Today.ToString("yyyy-MM-dd");
             _birthDateInput.Focusable = false;
             _birthDateInput.Click += (s, e) =>
@@ -65,7 +63,7 @@ namespace MoneyMap.Activities
                     return;
                 }
 
-                var (ok, err, user) = await App.UserService.TryRegisterAsync(fullName, email, password, birthDate);
+                var (ok, err, user) = await App.UserService.TryRegisterWithFirebaseAsync(fullName, email, password, birthDate);
                 if (!ok)
                 {
                     Toast.MakeText(this, err, ToastLength.Long).Show();

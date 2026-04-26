@@ -22,16 +22,23 @@ namespace MoneyMap.DAL
             if (_schemaEnsured) return;
 
             await _db.CreateTableAsync<Income>();
-
-            await _db.ExecuteAsync(
-                "CREATE INDEX IF NOT EXISTS idx_incomes_user_date ON IncomesTable (UserID, Date)");
+            await _db.ExecuteAsync("CREATE INDEX IF NOT EXISTS idx_incomes_user_date ON IncomesTable (UserID, Date)");
 
             _schemaEnsured = true;
         }
 
-        public Task AddIncome(Income income)
+        public async Task AddIncome(Income income)
         {
-            return _db.InsertAsync(income);
+            await _db.InsertAsync(income);
+            App.BackupState?.MarkIncomesChanged();
+        }
+
+        public Task<List<Income>> GetAllByUser(int userId)
+        {
+            return _db.Table<Income>()
+                      .Where(i => i.UserID == userId)
+                      .OrderByDescending(i => i.Date)
+                      .ToListAsync();
         }
 
         public Task<List<Income>> GetUserIncomes(int userId, DateTime month)
@@ -62,7 +69,10 @@ namespace MoneyMap.DAL
                                   .FirstOrDefaultAsync();
 
             if (income != null)
+            {
                 await _db.DeleteAsync(income);
+                App.BackupState?.MarkIncomesChanged();
+            }
         }
     }
 }

@@ -1,15 +1,7 @@
-﻿using Android.App;
-using Android.Content;
-using Android.OS;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
-using SQLite;
+﻿using SQLite;
 using SQLiteNetExtensions.Attributes;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace MoneyMap.Models
 {
@@ -17,43 +9,33 @@ namespace MoneyMap.Models
     public class User
     {
         [PrimaryKey, AutoIncrement]
-        public int UserID { get; set; } // מפתח ראשי
-
+        public int UserID { get; set; }
 
         [NotNull]
-        public string FullName { get; set; }     // שם מלא
+        public string FullName { get; set; }
 
-
-        public string Password { get; set; } // סיסמה (מאובטחת בעתיד)
-
+        public string Password { get; set; }
 
         [NotNull, Unique]
-        public string Email { get; set; } // כתובת אימייל
+        public string Email { get; set; }
 
+        [Unique]
+        public string FirebaseUid { get; set; }
 
         [NotNull]
-        public DateTime BirthDate { get; set; } // תאריך לידה
+        public DateTime BirthDate { get; set; }
 
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now; // מתי נוצר המשתמש
-
-       public string Role { get; set; } = "User";// "Admin" או "User" לפי הצורך
-
+        public string Role { get; set; } = "User";
 
         [OneToMany(CascadeOperations = CascadeOperation.All)]
         public List<Investment> Investments { get; set; }
 
-
         [OneToMany(CascadeOperations = CascadeOperation.All)]
         public List<Budget> Budget { get; set; }
 
-
         [OneToMany(CascadeOperations = CascadeOperation.All)]
-        public List<Category> Categories { get; set; } //בדיקה למה לא בטוח אני אשאיר את זה 
-
-
-
-
-
+        public List<Category> Categories { get; set; }
     }
 }

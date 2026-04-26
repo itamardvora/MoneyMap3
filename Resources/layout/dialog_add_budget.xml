@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
     android:background="#F8FAFC"
-    android:padding="20dp">
+    android:padding="16dp">
 
     <LinearLayout
         android:orientation="vertical"
@@ -18,77 +19,66 @@
             android:layout_height="wrap_content"
             android:text="הוספת תקציב"
             android:textColor="#0F172A"
-            android:textSize="24sp"
+            android:textSize="22sp"
             android:textStyle="bold" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:layout_marginBottom="20dp"
-            android:text="מלא את פרטי התקציב החודשי"
+            android:layout_marginBottom="16dp"
+            android:text="מלא את פרטי התקציב"
             android:textColor="#64748B"
-            android:textSize="14sp" />
+            android:textSize="13sp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="חודש"
             android:textColor="#0F172A"
-            android:textSize="14sp"
             android:textStyle="bold" />
 
         <EditText
             android:id="@+id/budgetMonthInput"
             android:layout_width="match_parent"
             android:layout_height="52dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="14dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="12dp"
             android:background="#F8FAFC"
-            android:gravity="center_vertical"
-            android:hint="mm/yyyy"
-            android:paddingLeft="14dp"
-            android:paddingRight="14dp"
-            android:textColor="#0F172A"
-            android:textColorHint="#94A3B8" />
+            android:hint="yyyy-MM"
+            android:padding="12dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="סכום חודשי"
+            android:text="סכום"
             android:textColor="#0F172A"
-            android:textSize="14sp"
             android:textStyle="bold" />
 
         <EditText
             android:id="@+id/budgetAmountInput"
             android:layout_width="match_parent"
             android:layout_height="52dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="14dp"
-            android:background="#F8FAFC"
-            android:gravity="center_vertical"
-            android:hint="₪"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="12dp"
             android:inputType="numberDecimal"
-            android:paddingLeft="14dp"
-            android:paddingRight="14dp"
-            android:textColor="#0F172A"
-            android:textColorHint="#94A3B8" />
+            android:background="#F8FAFC"
+            android:hint="₪"
+            android:padding="12dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="קטגוריה"
             android:textColor="#0F172A"
-            android:textSize="14sp"
             android:textStyle="bold" />
 
         <Spinner
             android:id="@+id/budgetCategorySpinner"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="18dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="14dp"
             android:background="#F8FAFC"
             android:paddingLeft="10dp"
             android:paddingRight="10dp" />
@@ -97,11 +87,10 @@
             android:id="@+id/confirmAddBudgetButton"
             android:layout_width="match_parent"
             android:layout_height="52dp"
-            android:backgroundTint="#0F172A"
             android:text="הוסף תקציב"
             android:textAllCaps="false"
-            android:textColor="#FFFFFF"
-            android:textSize="15sp"
-            android:textStyle="bold" />
+            android:backgroundTint="#0F172A"
+            android:textColor="#FFFFFF" />
+
     </LinearLayout>
 </ScrollView>

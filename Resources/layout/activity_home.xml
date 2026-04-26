@@ -5,17 +5,16 @@
     android:layout_height="match_parent"
     android:background="#F8FAFC">
 
-    <!-- Top Bar -->
     <LinearLayout
         android:id="@+id/topBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
         android:paddingLeft="20dp"
         android:paddingRight="20dp"
         android:paddingTop="20dp"
-        android:paddingBottom="10dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:paddingBottom="10dp">
 
         <TextView
             android:id="@+id/helloUserText"
@@ -29,10 +28,21 @@
 
         <Spinner
             android:id="@+id/currencySpinner"
-            android:layout_width="110dp"
+            android:layout_width="100dp"
             android:layout_height="42dp"
             android:background="#FFFFFF"
             android:padding="6dp" />
+
+        <Button
+            android:id="@+id/profileButton"
+            android:layout_width="wrap_content"
+            android:layout_height="42dp"
+            android:layout_marginLeft="8dp"
+            android:backgroundTint="#0F172A"
+            android:text="פרטים"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold" />
     </LinearLayout>
 
     <ScrollView
@@ -52,7 +62,6 @@
             android:paddingTop="10dp"
             android:paddingBottom="20dp">
 
-            <!-- Budget Card -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -100,15 +109,13 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <!-- Investments Card -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="#FFFFFF"
                 android:elevation="2dp"
                 android:orientation="vertical"
-                android:padding="18dp"
-                android:layout_marginBottom="16dp">
+                android:padding="18dp">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -140,18 +147,16 @@
         </LinearLayout>
     </ScrollView>
 
-<com.google.android.material.bottomnavigation.BottomNavigationView
-    android:id="@+id/bottomNavigation"
-    android:layout_width="match_parent"
-    android:layout_height="56dp"
-    android:layout_alignParentBottom="true"
-    android:background="@drawable/bottom_nav_background"
-    android:elevation="6dp"
-
-    app:itemIconTint="@color/bottom_nav_selector"
-    app:itemTextColor="@color/bottom_nav_selector"
-
-    app:labelVisibilityMode="labeled"
-    app:menu="@menu/navigation_menu" />
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigation"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_alignParentBottom="true"
+        android:background="@drawable/bottom_nav_background"
+        android:elevation="6dp"
+        app:itemIconTint="@color/bottom_nav_selector"
+        app:itemTextColor="@color/bottom_nav_selector"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/navigation_menu" />
 
 </RelativeLayout>

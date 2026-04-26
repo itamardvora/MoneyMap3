@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="#F8FAFC"
-    android:padding="20dp">
+    android:padding="10dp">
 
     <LinearLayout
         android:orientation="vertical"
@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:background="#FFFFFF"
         android:elevation="2dp"
-        android:padding="18dp">
+        android:padding="12dp">
 
         <TextView
             android:layout_width="wrap_content"
@@ -128,7 +128,7 @@
         <ImageView
             android:id="@+id/receiptPreviewImage"
             android:layout_width="match_parent"
-            android:layout_height="180dp"
+            android:layout_height="110dp"
             android:layout_marginTop="12dp"
             android:adjustViewBounds="true"
             android:background="#F8FAFC"

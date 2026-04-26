@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "28676741866",
+    "project_id": "moneymap-a96f8",
+    "storage_bucket": "moneymap-a96f8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:28676741866:android:cd7224737336e53e3f9593",
+        "android_client_info": {
+          "package_name": "com.companyname.moneymap"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAlJOsg7ykbrx61SAWBhhnyKARM1GgG0sI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
