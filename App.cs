@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using SQLite;
 using Xamarin.Essentials;
@@ -13,7 +14,6 @@ namespace MoneyMap
     {
         public static SQLiteAsyncConnection Db { get; private set; }
 
-        // --- DAL ---
         public static UserRepository Users { get; private set; }
         public static InvestmentRepository Investments { get; private set; }
         public static BudgetRepository Budgets { get; private set; }
@@ -22,11 +22,12 @@ namespace MoneyMap
         public static StockPriceCacheRepository StockPrices { get; private set; }
         public static UserSettingsRepository UserSettingsRepo { get; private set; }
         public static CurrencyRateRepository CurrencyRateRepo { get; private set; }
-
-        
         public static IncomeRepository Incomes { get; private set; }
 
-        // --- Services ---
+        public static FirebaseAuthService FirebaseAuthService { get; private set; }
+        public static FirebaseBackupService FirebaseBackupService { get; private set; }
+        public static FirebaseBackupState BackupState { get; private set; }
+
         public static UserService UserService { get; private set; }
         public static CategoryService CategoryService { get; private set; }
         public static ExpenseService ExpenseService { get; private set; }
@@ -35,12 +36,11 @@ namespace MoneyMap
         public static InvestmentService InvestmentService { get; private set; }
         public static PortfolioService PortfolioService { get; private set; }
         public static CurrencyService CurrencyService { get; private set; }
-
-        // חדש
         public static IncomeService IncomeService { get; private set; }
 
         private static bool _coreInited = false;
         private static bool _fullInited = false;
+        private static readonly SemaphoreSlim _backupLock = new SemaphoreSlim(1, 1);
 
         public static async Task InitAsync()
         {
@@ -61,8 +61,11 @@ namespace MoneyMap
             await DatabaseContext.InitAsync();
             Db = DatabaseContext.GetConnection();
 
+            BackupState = new FirebaseBackupState();
+            FirebaseAuthService = new FirebaseAuthService();
+
             Users = new UserRepository(Db);
-            UserService = new UserService(Users);
+            UserService = new UserService(Users, FirebaseAuthService);
 
             _coreInited = true;
         }
@@ -74,9 +77,6 @@ namespace MoneyMap
             if (!_coreInited)
                 await InitForAuthAsync();
 
-            // --------------------
-            // 1) DAL
-            // --------------------
             Investments = new InvestmentRepository(Db);
 
             var invMigrator = new InvestmentMigrationHelper(Db);
@@ -88,23 +88,23 @@ namespace MoneyMap
             StockPrices = new StockPriceCacheRepository(Db);
             UserSettingsRepo = new UserSettingsRepository(Db);
             CurrencyRateRepo = new CurrencyRateRepository(Db);
-
-            // חדש
             Incomes = new IncomeRepository(Db);
 
-            // --------------------
-            // 2) Services ללא רשת
-            // --------------------
+            FirebaseBackupService = new FirebaseBackupService(
+                FirebaseAuthService,
+                Users,
+                Category,
+                Budgets,
+                Expenses,
+                Investments,
+                Incomes);
+
             CategoryService = new CategoryService(Category);
+            await CategoryService.EnsureDefaultCategoriesAsync();
             ExpenseService = new ExpenseService(Expenses);
             BudgetService = new BudgetService(Budgets, Expenses, Category);
-
-            // חדש
             IncomeService = new IncomeService(Incomes);
 
-            // --------------------
-            // 3) CurrencyService
-            // --------------------
             try
             {
                 IExchangeRatesClient boiClient = new ExchangeRatesClient();
@@ -131,9 +131,6 @@ namespace MoneyMap
                 CurrencyService = null;
             }
 
-            // --------------------
-            // 4) StockPriceService
-            // --------------------
             try
             {
                 const string alphaKey = "K64STGMLKTAXGBC7";
@@ -145,13 +142,70 @@ namespace MoneyMap
                 StockPriceService = null;
             }
 
-            // --------------------
-            // 5) Services שתלויים במניות/מטבע
-            // --------------------
             InvestmentService = new InvestmentService(Investments, StockPriceService, CurrencyService);
-            PortfolioService = new PortfolioService(Investments, StockPriceService);
+            PortfolioService = new PortfolioService(Investments, StockPriceService, CurrencyService);
+
+            await TryRestoreBackupIfNeededAsync();
 
             _fullInited = true;
+        }
+
+        private static async Task TryRestoreBackupIfNeededAsync()
+        {
+            try
+            {
+                var userId = UserSession.LoggedInUserId ?? Preferences.Get("LoggedInUserId", 0);
+                if (userId <= 0)
+                    return;
+
+                if (FirebaseBackupService == null)
+                    return;
+
+                bool restored = await FirebaseBackupService.RestoreIfLocalDataMissingAsync(userId);
+
+                if (restored)
+                {
+                    Log.Info("App.Restore", "Firebase backup restored into local SQLite.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warn("App.Restore", "Restore failed: " + ex.Message);
+            }
+        }
+
+        public static async Task TryBackupPendingChangesAsync()
+        {
+            if (!IsFullyReady())
+                return;
+
+            var userId = UserSession.LoggedInUserId ?? 0;
+            if (userId <= 0)
+                return;
+
+            if (BackupState == null || !BackupState.HasPendingChanges)
+                return;
+
+            if (!await _backupLock.WaitAsync(0))
+                return;
+
+            try
+            {
+                var snapshot = BackupState.CreateSnapshot();
+                if (!snapshot.HasAny)
+                    return;
+
+                await FirebaseBackupService.SyncPendingAsync(userId, snapshot);
+                BackupState.Clear(snapshot);
+            }
+            catch (Exception ex)
+            {
+                Log.Warn("App.Backup", "Backup failed: " + ex.Message);
+            }
+            finally
+            {
+                _backupLock.Release();
+            }
         }
 
         public static bool IsCoreReady() =>

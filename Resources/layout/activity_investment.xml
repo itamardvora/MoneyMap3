@@ -10,169 +10,173 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/bottomNavigation"
-        android:orientation="vertical"
-        android:paddingLeft="20dp"
-        android:paddingTop="24dp"
-        android:paddingRight="20dp"
-        android:paddingBottom="16dp">
+        android:orientation="vertical">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="השקעות"
-            android:textColor="#0F172A"
-            android:textSize="28sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:layout_marginBottom="18dp"
-            android:textColor="#64748B"
-            android:textSize="14sp" />
-
-        <!-- כרטיס שווי התיק -->
-        <LinearLayout
+        <ScrollView
+            android:id="@+id/investmentTopScroll"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:background="#FFFFFF"
-            android:elevation="2dp"
-            android:orientation="vertical"
-            android:padding="18dp">
+            android:fillViewport="false">
 
-            <TextView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="שווי תיק"
-                android:textColor="#64748B"
-                android:textSize="13sp" />
+                android:orientation="vertical"
+                android:paddingLeft="20dp"
+                android:paddingTop="24dp"
+                android:paddingRight="20dp"
+                android:paddingBottom="10dp">
 
-            <TextView
-                android:id="@+id/portfolioValueText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="₪ 0.00"
-                android:textColor="#0F172A"
-                android:textSize="30sp"
-                android:textStyle="bold" />
-        </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="השקעות"
+                    android:textColor="#0F172A"
+                    android:textSize="28sp"
+                    android:textStyle="bold" />
 
-        <!-- כפתור הצגת/הסתרת הטופס -->
-        <Button
-            android:id="@+id/addInvestmentButton"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginBottom="14dp"
-            android:backgroundTint="#0F172A"
-            android:text="הוסף השקעה"
-            android:textAllCaps="false"
-            android:textColor="#FFFFFF"
-            android:textSize="15sp"
-            android:textStyle="bold" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:layout_marginBottom="16dp"
+                    android:background="#FFFFFF"
+                    android:elevation="2dp"
+                    android:orientation="vertical"
+                    android:padding="18dp">
 
-        <!-- טופס הוספה -->
-        <LinearLayout
-            android:id="@+id/addFormLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="14dp"
-            android:background="#FFFFFF"
-            android:elevation="2dp"
-            android:orientation="vertical"
-            android:padding="16dp"
-            android:visibility="gone">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="שווי תיק"
+                        android:textColor="#64748B"
+                        android:textSize="13sp" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="הוספת השקעה חדשה"
-                android:textColor="#0F172A"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/portfolioValueText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="₪ 0.00"
+                        android:textColor="#0F172A"
+                        android:textSize="30sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
 
-            <EditText
-                android:id="@+id/symbolInput"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginTop="14dp"
-                android:background="#F8FAFC"
-                android:hint="סימבול (AAPL)"
-                android:maxLines="1"
-                android:paddingLeft="14dp"
-                android:paddingRight="14dp"
-                android:textColor="#0F172A"
-                android:textColorHint="#94A3B8" />
+                <Button
+                    android:id="@+id/addInvestmentButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginBottom="14dp"
+                    android:backgroundTint="#0F172A"
+                    android:text="הוסף השקעה"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
 
-            <EditText
-                android:id="@+id/quantityInput"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginTop="10dp"
-                android:background="#F8FAFC"
-                android:hint="כמות"
-                android:inputType="numberDecimal"
-                android:paddingLeft="14dp"
-                android:paddingRight="14dp"
-                android:textColor="#0F172A"
-                android:textColorHint="#94A3B8" />
+                <LinearLayout
+                    android:id="@+id/addFormLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="14dp"
+                    android:background="#FFFFFF"
+                    android:elevation="2dp"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:visibility="gone">
 
-            <EditText
-                android:id="@+id/buyPriceInput"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginTop="10dp"
-                android:background="#F8FAFC"
-                android:hint="מחיר קנייה (במטבע המקורי)"
-                android:inputType="numberDecimal"
-                android:paddingLeft="14dp"
-                android:paddingRight="14dp"
-                android:textColor="#0F172A"
-                android:textColorHint="#94A3B8" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="הוספת השקעה חדשה"
+                        android:textColor="#0F172A"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
 
-            <Spinner
-                android:id="@+id/investmentCurrencySpinner"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginTop="10dp"
-                android:background="#F8FAFC"
-                android:paddingLeft="10dp"
-                android:paddingRight="10dp" />
+                    <EditText
+                        android:id="@+id/symbolInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="14dp"
+                        android:background="#F8FAFC"
+                        android:hint="סימבול (AAPL)"
+                        android:maxLines="1"
+                        android:paddingLeft="14dp"
+                        android:paddingRight="14dp"
+                        android:textColor="#0F172A"
+                        android:textColorHint="#94A3B8" />
 
-            <EditText
-                android:id="@+id/buyDateInput"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginTop="10dp"
-                android:background="#F8FAFC"
-                android:hint="תאריך קנייה yyyy-MM-dd"
-                android:paddingLeft="14dp"
-                android:paddingRight="14dp"
-                android:textColor="#0F172A"
-                android:textColorHint="#94A3B8" />
+                    <EditText
+                        android:id="@+id/quantityInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="10dp"
+                        android:background="#F8FAFC"
+                        android:hint="כמות"
+                        android:inputType="numberDecimal"
+                        android:paddingLeft="14dp"
+                        android:paddingRight="14dp"
+                        android:textColor="#0F172A"
+                        android:textColorHint="#94A3B8" />
 
-            <Button
-                android:id="@+id/saveInvestmentButton"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginTop="14dp"
-                android:backgroundTint="#2563EB"
-                android:text="שמור השקעה"
-                android:textAllCaps="false"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold" />
-        </LinearLayout>
+                    <EditText
+                        android:id="@+id/buyPriceInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="10dp"
+                        android:background="#F8FAFC"
+                        android:hint="מחיר קנייה (במטבע המקורי)"
+                        android:inputType="numberDecimal"
+                        android:paddingLeft="14dp"
+                        android:paddingRight="14dp"
+                        android:textColor="#0F172A"
+                        android:textColorHint="#94A3B8" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
-            android:text="השקעות קיימות"
-            android:textColor="#0F172A"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+                    <Spinner
+                        android:id="@+id/investmentCurrencySpinner"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="10dp"
+                        android:background="#F8FAFC"
+                        android:paddingLeft="10dp"
+                        android:paddingRight="10dp" />
+
+                    <EditText
+                        android:id="@+id/buyDateInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="10dp"
+                        android:background="#F8FAFC"
+                        android:hint="תאריך קנייה yyyy-MM-dd"
+                        android:paddingLeft="14dp"
+                        android:paddingRight="14dp"
+                        android:textColor="#0F172A"
+                        android:textColorHint="#94A3B8" />
+
+                    <Button
+                        android:id="@+id/saveInvestmentButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="14dp"
+                        android:backgroundTint="#2563EB"
+                        android:text="שמור השקעה"
+                        android:textAllCaps="false"
+                        android:textColor="#FFFFFF"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:text="השקעות קיימות"
+                    android:textColor="#0F172A"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+        </ScrollView>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/investmentRecyclerView"
@@ -180,21 +184,22 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:clipToPadding="false"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
             android:paddingBottom="8dp" />
+
     </LinearLayout>
 
-  <com.google.android.material.bottomnavigation.BottomNavigationView
-    android:id="@+id/bottomNavigation"
-    android:layout_width="match_parent"
-    android:layout_height="56dp"
-    android:layout_alignParentBottom="true"
-    android:background="@drawable/bottom_nav_background"
-    android:elevation="6dp"
-
-    app:itemIconTint="@color/bottom_nav_selector"
-    app:itemTextColor="@color/bottom_nav_selector"
-
-    app:labelVisibilityMode="labeled"
-    app:menu="@menu/navigation_menu" />
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigation"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_alignParentBottom="true"
+        android:background="@drawable/bottom_nav_background"
+        android:elevation="6dp"
+        app:itemIconTint="@color/bottom_nav_selector"
+        app:itemTextColor="@color/bottom_nav_selector"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/navigation_menu" />
 
 </RelativeLayout>

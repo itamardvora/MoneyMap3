@@ -13,7 +13,7 @@ using Xamarin.Essentials;
 using MoneyMap.Services;
 using MoneyMap.Adapters;
 using MoneyMap.Models;
-//1
+
 namespace MoneyMap.Activities
 {
     [Activity(
@@ -23,6 +23,12 @@ namespace MoneyMap.Activities
         Exported = false)]
     public class BudgetActivity : AppCompatActivity, IBudgetItemListener
     {
+        protected override void OnStop()
+        {
+            base.OnStop();
+            _ = App.TryBackupPendingChangesAsync();
+        }
+
         private TextView _currentMonthText;
         private TextView _totalIncomeText;
         private TextView _totalBudgetText;
@@ -125,18 +131,33 @@ namespace MoneyMap.Activities
             bottomNav.NavigationItemSelected += (s, e) =>
             {
                 e.Handled = true;
+
                 switch (e.Item.ItemId)
                 {
                     case Resource.Id.menu_home:
-                        if (!(this is HomeActivity)) StartActivity(typeof(HomeActivity));
+                        StartActivity(typeof(HomeActivity));
+                        OverridePendingTransition(Resource.Animation.slide_in_right, Resource.Animation.slide_out_left);
                         break;
+
                     case Resource.Id.menu_investments:
-                        if (!(this is InvestmentActivity)) StartActivity(typeof(InvestmentActivity));
+                        StartActivity(typeof(InvestmentActivity));
+                        OverridePendingTransition(Resource.Animation.slide_in_right, Resource.Animation.slide_out_left);
                         break;
+
                     case Resource.Id.menu_budget:
                         break;
                 }
             };
+        }
+
+        private void SetDialogSize(AndroidX.AppCompat.App.AlertDialog dialog)
+        {
+            if (dialog?.Window == null) return;
+
+            int width = (int)(Resources.DisplayMetrics.WidthPixels * 0.92);
+            int height = (int)(Resources.DisplayMetrics.HeightPixels * 0.85);
+
+            dialog.Window.SetLayout(width, height);
         }
 
         private async Task EnsureUserSessionAsync()
@@ -145,6 +166,7 @@ namespace MoneyMap.Activities
             {
                 var savedId = Preferences.Get("LoggedInUserId", 0);
                 var savedName = Preferences.Get("LoggedInUserName", "");
+
                 if (savedId > 0)
                 {
                     UserSession.LoggedInUserId = savedId;
@@ -254,11 +276,13 @@ namespace MoneyMap.Activities
                 {
                     dateInput.Text = ev.Date.ToString("yyyy-MM-dd");
                 }, t.Year, t.Month - 1, 1);
+
                 dp.Show();
             };
 
             var dialog = builder.Create();
             dialog.Show();
+            SetDialogSize(dialog);
 
             confirmBtn.Click += async (s, e) =>
             {
@@ -294,21 +318,12 @@ namespace MoneyMap.Activities
                         {
                             var rate = await App.CurrencyService.GetRateAsync(preferred, "ILS");
                             if (rate.HasValue && rate.Value > 0m)
-                            {
                                 amountIls = amountInDisplayCurrency * rate.Value;
-                            }
                         }
-                        catch
-                        {
-                        }
+                        catch { }
                     }
 
-                    await App.IncomeService.AddIncome(
-                        userId,
-                        amountIls,
-                        sourceInput.Text,
-                        date
-                    );
+                    await App.IncomeService.AddIncome(userId, amountIls, sourceInput.Text, date);
 
                     _selectedMonth = new DateTime(date.Year, date.Month, 1);
                     await LoadBudgetSummary();
@@ -346,11 +361,13 @@ namespace MoneyMap.Activities
                     var d = new DateTime(ev.Date.Year, ev.Date.Month, 1);
                     monthInput.Text = d.ToString("yyyy-MM-01");
                 }, t.Year, t.Month - 1, 1);
+
                 dp.Show();
             };
 
             int userId = UserSession.LoggedInUserId ?? 0;
             var categories = await App.CategoryService.GetCategoriesForUser(userId);
+
             var names = categories.Select(c => c.CategoryName).ToList();
             names.Add("➕ קטגוריה חדשה");
 
@@ -360,18 +377,21 @@ namespace MoneyMap.Activities
 
             var dialog = builder.Create();
             dialog.Show();
+            SetDialogSize(dialog);
 
             categorySpinner.ItemSelected += (s, e) =>
             {
                 if (e.Position == categories.Count)
                 {
                     var input = new EditText(this) { Hint = "שם קטגוריה חדשה" };
+
                     new AndroidX.AppCompat.App.AlertDialog.Builder(this)
                         .SetTitle("קטגוריה חדשה")
                         .SetView(input)
                         .SetPositiveButton("צור", async (dlg, evt) =>
                         {
                             var newName = input.Text?.Trim();
+
                             if (!string.IsNullOrEmpty(newName))
                             {
                                 await App.CategoryService.AddCategory(newName, userId);
@@ -393,6 +413,7 @@ namespace MoneyMap.Activities
                 try
                 {
                     var idx = categorySpinner.SelectedItemPosition;
+
                     if (idx < 0 || idx >= categories.Count)
                     {
                         Toast.MakeText(this, "בחר קטגוריה", ToastLength.Short).Show();
@@ -409,6 +430,7 @@ namespace MoneyMap.Activities
                     }
 
                     await App.BudgetService.AddUserBudget(userId, categories[idx].CategoryID, monthlyLimit, month);
+
                     _selectedMonth = new DateTime(month.Year, month.Month, 1);
                     await LoadBudgetSummary();
                     dialog.Dismiss();
@@ -447,11 +469,27 @@ namespace MoneyMap.Activities
                 {
                     dateInput.Text = ev.Date.ToString("yyyy-MM-dd");
                 }, t.Year, t.Month - 1, 1);
+
                 dp.Show();
             };
 
             int userId = UserSession.LoggedInUserId ?? 0;
-            var categories = await App.CategoryService.GetCategoriesForUser(userId);
+            var budgetStatuses = await App.BudgetService.GetUserBudgetStatus(userId, _selectedMonth);
+
+            var categories = budgetStatuses
+                .Select(s => new Category
+                {
+                    CategoryID = s.CategoryID,
+                    CategoryName = s.CategoryName
+                })
+                .ToList();
+
+            if (categories.Count == 0)
+            {
+                Toast.MakeText(this, "אין קטגוריות עם תקציב בחודש הזה", ToastLength.Long).Show();
+                return;
+            }
+
             var names = categories.Select(c => c.CategoryName).ToList();
 
             var spinnerAdapter = new ArrayAdapter<string>(this, Android.Resource.Layout.SimpleSpinnerItem, names);
@@ -465,6 +503,7 @@ namespace MoneyMap.Activities
                 try
                 {
                     var options = new[] { "צלם עכשיו", "בחר מהגלריה" };
+
                     new AndroidX.AppCompat.App.AlertDialog.Builder(this)
                         .SetTitle("צרף קבלה")
                         .SetItems(options, async (sender, args) =>
@@ -491,6 +530,7 @@ namespace MoneyMap.Activities
                             {
                                 var dir = System.IO.Path.Combine(FileSystem.AppDataDirectory, "receipts");
                                 System.IO.Directory.CreateDirectory(dir);
+
                                 var fileName = $"receipt_{DateTime.UtcNow:yyyyMMdd_HHmmss}.jpg";
                                 var full = System.IO.Path.Combine(dir, fileName);
 
@@ -513,6 +553,7 @@ namespace MoneyMap.Activities
 
             var dialog = builder.Create();
             dialog.Show();
+            SetDialogSize(dialog);
 
             confirmBtn.Click += async (s, e) =>
             {
@@ -541,7 +582,8 @@ namespace MoneyMap.Activities
                     decimal amountIls = amountInDisplayCurrency;
                     var preferred = await SafePreferredCodeAsync();
 
-                    if (!string.Equals(preferred, "ILS", StringComparison.OrdinalIgnoreCase) && App.CurrencyService != null)
+                    if (!string.Equals(preferred, "ILS", StringComparison.OrdinalIgnoreCase) &&
+                        App.CurrencyService != null)
                     {
                         try
                         {
@@ -549,9 +591,7 @@ namespace MoneyMap.Activities
                             if (rate.HasValue && rate.Value > 0m)
                                 amountIls = amountInDisplayCurrency * rate.Value;
                         }
-                        catch
-                        {
-                        }
+                        catch { }
                     }
 
                     await App.ExpenseService.AddExpense(

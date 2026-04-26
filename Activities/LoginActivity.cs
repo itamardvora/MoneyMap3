@@ -1,12 +1,10 @@
-﻿// MoneyMap/Activities/LoginActivity.cs
-using System;
+﻿using System;
 using Android.App;
 using Android.OS;
 using Android.Widget;
-using MoneyMap.Services;
 using Xamarin.Essentials;
-using Android.Content;   // ← זה חסר
-
+using Android.Content;
+using MoneyMap.Services;
 
 namespace MoneyMap.Activities
 {
@@ -30,7 +28,7 @@ namespace MoneyMap.Activities
 
             goToRegisterButton.Click += (s, e) => StartActivity(typeof(RegisterActivity));
 
-            await App.InitForAuthAsync(); // ליבה בלבד
+            await App.InitForAuthAsync();
 
             loginButton.Click += async (s, e) =>
             {
@@ -47,25 +45,27 @@ namespace MoneyMap.Activities
                 {
                     loginButton.Enabled = false;
 
-                    var user = await App.UserService.LoginUser(email, password);
-                    if (user == null)
+                    if (App.UserService.IsAdminCredentials(email, password))
                     {
-                        Toast.MakeText(this, "מייל או סיסמה לא נכונים", ToastLength.Short).Show();
+                        App.UserService.SignInAsAdmin();
+                        StartActivity(typeof(AdminActivity));
+                        Finish();
                         return;
                     }
 
-                    UserSession.LoggedInUserId = user.UserID;
-                    UserSession.LoggedInUserName = user.FullName;
-                    Preferences.Set("LoggedInUserId", user.UserID);
-                    Preferences.Set("LoggedInUserName", user.FullName);
+                    var (ok, err, user) = await App.UserService.AuthenticateWithFirebaseAsync(email, password);
+                    if (!ok)
+                    {
+                        Toast.MakeText(this, err, ToastLength.Long).Show();
+                        return;
+                    }
 
-                    await App.InitAfterLoginAsync(); // שירותים מלאים
+                    await App.InitAfterLoginAsync();
 
-                    // תזמון יומי ב-06:00 והפעלה ראשונית
                     AlarmScheduler.ScheduleDaily(this, 6, 0);
 
                     var svc = new Intent(this, typeof(RatesSyncService));
-                    if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.O)
+                    if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
                         StartForegroundService(svc);
                     else
                         StartService(svc);

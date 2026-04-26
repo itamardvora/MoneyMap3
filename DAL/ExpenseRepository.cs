@@ -17,13 +17,13 @@ namespace MoneyMap.DAL
         private readonly SQLiteAsyncConnection _db;
         private static bool _schemaEnsured = false;
 
-        public ExpenseRepository(SQLiteAsyncConnection db)//  בודקת שקיימת טבלה אם לא קוראת לפעולה שתיצור 
+        public ExpenseRepository(SQLiteAsyncConnection db)
         {
             _db = db;
             _ = EnsureSchemaAsync();
         }
 
-        private async Task EnsureSchemaAsync()// מוודא שהדאטה בייס מוכן לשימוש 
+        private async Task EnsureSchemaAsync()
         {
             if (_schemaEnsured) return;
 
@@ -35,18 +35,27 @@ namespace MoneyMap.DAL
             }
             catch
             {
-                // exists – ignore
             }
 
-            await _db.ExecuteAsync(
-                "CREATE INDEX IF NOT EXISTS idx_expenses_user_date ON ExpensesTable (UserID, Date)");
-
+            await _db.ExecuteAsync("CREATE INDEX IF NOT EXISTS idx_expenses_user_date ON ExpensesTable (UserID, Date)");
             _schemaEnsured = true;
         }
 
-        public Task AddExpense(Expense expense) => _db.InsertAsync(expense);// הוספת הוצאה 
+        public async Task AddExpense(Expense expense)
+        {
+            await _db.InsertAsync(expense);
+            App.BackupState?.MarkExpensesChanged();
+        }
 
-        public Task<List<Expense>> GetUserExpenses(int userId, DateTime month) // מחזיר רשימת הוצאות 
+        public Task<List<Expense>> GetAllByUser(int userId)
+        {
+            return _db.Table<Expense>()
+                      .Where(e => e.UserID == userId)
+                      .OrderByDescending(e => e.Date)
+                      .ToListAsync();
+        }
+
+        public Task<List<Expense>> GetUserExpenses(int userId, DateTime month)
         {
             var start = new DateTime(month.Year, month.Month, 1);
             var end = start.AddMonths(1);
@@ -56,7 +65,7 @@ namespace MoneyMap.DAL
                       .ToListAsync();
         }
 
-        public Task<List<ExpenseCategoryTotal>> GetExpensesByCategory(int userId, DateTime month)// תחזיר כמה כסף בובז בכל קטגוריה 
+        public Task<List<ExpenseCategoryTotal>> GetExpensesByCategory(int userId, DateTime month)
         {
             var start = new DateTime(month.Year, month.Month, 1);
             var end = start.AddMonths(1);
@@ -68,6 +77,7 @@ namespace MoneyMap.DAL
                 WHERE UserID = ?
                   AND Date >= ? AND Date < ?
                 GROUP BY CategoryID";
+
             return _db.QueryAsync<ExpenseCategoryTotal>(sql, userId, start, end);
         }
 
@@ -76,8 +86,12 @@ namespace MoneyMap.DAL
             var expense = await _db.Table<Expense>()
                                    .Where(e => e.ExpenseID == expenseId && e.UserID == userId)
                                    .FirstOrDefaultAsync();
+
             if (expense != null)
+            {
                 await _db.DeleteAsync(expense);
+                App.BackupState?.MarkExpensesChanged();
+            }
         }
 
         public Task<Expense> GetById(int userId, int expenseId) =>

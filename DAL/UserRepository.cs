@@ -1,30 +1,39 @@
-﻿using Android.App;
-using Android.Content;
-using Android.OS;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using SQLite;
-using System;
-using System.IO;
-using Xamarin.Essentials;
-using MoneyMap.Models;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using MoneyMap.DAL;
-using static Android.Provider.ContactsContract.CommonDataKinds;
+using SQLite;
+using MoneyMap.Models;
 
 namespace MoneyMap.DAL
 {
     public class UserRepository
     {
         private readonly SQLiteAsyncConnection _db;
+        private static bool _schemaEnsured = false;
 
         public UserRepository(SQLiteAsyncConnection db)
         {
             _db = db;
+            _ = EnsureSchemaAsync();
+        }
+
+        private async Task EnsureSchemaAsync()
+        {
+            if (_schemaEnsured) return;
+
+            await _db.CreateTableAsync<User>();
+
+            try
+            {
+                await _db.ExecuteAsync("ALTER TABLE UsersTable ADD COLUMN FirebaseUid TEXT");
+            }
+            catch
+            {
+            }
+
+            await _db.ExecuteAsync("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON UsersTable (Email)");
+            await _db.ExecuteAsync("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_firebaseuid ON UsersTable (FirebaseUid)");
+
+            _schemaEnsured = true;
         }
 
         public Task AddUser(User user)
@@ -33,6 +42,14 @@ namespace MoneyMap.DAL
                 user.Email = user.Email.Trim().ToLowerInvariant();
 
             return _db.InsertAsync(user);
+        }
+
+        public Task UpdateUser(User user)
+        {
+            if (!string.IsNullOrWhiteSpace(user.Email))
+                user.Email = user.Email.Trim().ToLowerInvariant();
+
+            return _db.UpdateAsync(user);
         }
 
         public Task<User> GetUserByEmail(string email)
@@ -52,6 +69,45 @@ namespace MoneyMap.DAL
                       .FirstOrDefaultAsync();
         }
 
+        public Task<User> GetUserByFirebaseUid(string firebaseUid)
+        {
+            return _db.Table<User>()
+                      .Where(u => u.FirebaseUid == firebaseUid)
+                      .FirstOrDefaultAsync();
+        }
+
+        public Task<List<User>> GetAllUsers()
+        {
+            return _db.Table<User>()
+                      .OrderBy(u => u.FullName)
+                      .ToListAsync();
+        }
+
+        public async Task UpdateFullNameAsync(int userId, string fullName)
+        {
+            var user = await GetUserById(userId);
+            if (user == null) return;
+
+            user.FullName = fullName?.Trim();
+            await _db.UpdateAsync(user);
+        }
+
+        public Task<int> DeleteUserByIdAsync(int userId)
+        {
+            return _db.Table<User>()
+                      .Where(u => u.UserID == userId)
+                      .DeleteAsync();
+        }
+
+        public async Task LinkFirebaseUidAsync(int userId, string firebaseUid)
+        {
+            var user = await GetUserById(userId);
+            if (user == null) return;
+
+            user.FirebaseUid = firebaseUid;
+            await _db.UpdateAsync(user);
+        }
+
         public async Task<User> ValidateLogin(string email, string password)
         {
             if (!string.IsNullOrWhiteSpace(email))
@@ -66,4 +122,3 @@ namespace MoneyMap.DAL
         }
     }
 }
-

@@ -15,11 +15,18 @@ namespace MoneyMap.Activities
     [Activity(Label = "בית", Theme = "@style/AppTheme", Exported = false)]
     public class HomeActivity : AppCompatActivity
     {
+        protected override void OnStop()
+        {
+            base.OnStop();
+            _ = App.TryBackupPendingChangesAsync();
+        }
+
         private TextView _helloUser;
         private TextView _budgetTotal, _budgetRemaining;
         private TextView _portfolioValue, _portfolioPnL;
         private Spinner _currencySpinner;
         private Button _addExpenseButton;
+        private Button _profileButton;
 
         private readonly string[] _currencyOptions = new[] { "ILS", "USD", "EUR" };
         private bool _suppressSpinnerEvent = false;
@@ -37,11 +44,15 @@ namespace MoneyMap.Activities
             _portfolioPnL = FindViewById<TextView>(Resource.Id.homePortfolioPnlText);
             _currencySpinner = FindViewById<Spinner>(Resource.Id.currencySpinner);
             _addExpenseButton = FindViewById<Button>(Resource.Id.homeAddExpenseButton);
+            _profileButton = FindViewById<Button>(Resource.Id.profileButton);
 
             WireBottomNavigation();
 
             if (_addExpenseButton != null)
                 _addExpenseButton.Click += (s, e) => ShowAddExpenseDialog();
+
+            if (_profileButton != null)
+                _profileButton.Click += (s, e) => StartActivity(typeof(ProfileActivity));
 
             if (!App.IsFullyReady())
                 await App.InitAfterLoginAsync();
@@ -77,19 +88,20 @@ namespace MoneyMap.Activities
             bottomNav.NavigationItemSelected += (s, e) =>
             {
                 e.Handled = true;
+
                 switch (e.Item.ItemId)
                 {
                     case Resource.Id.menu_home:
                         break;
 
                     case Resource.Id.menu_investments:
-                        if (!(this is InvestmentActivity))
-                            StartActivity(typeof(InvestmentActivity));
+                        StartActivity(typeof(InvestmentActivity));
+                        OverridePendingTransition(Resource.Animation.slide_in_right, Resource.Animation.slide_out_left);
                         break;
 
                     case Resource.Id.menu_budget:
-                        if (!(this is BudgetActivity))
-                            StartActivity(typeof(BudgetActivity));
+                        StartActivity(typeof(BudgetActivity));
+                        OverridePendingTransition(Resource.Animation.slide_in_left, Resource.Animation.slide_out_right);
                         break;
                 }
             };

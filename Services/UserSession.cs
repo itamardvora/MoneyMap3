@@ -1,33 +1,36 @@
-﻿using Android.App;
-using Android.Content;
-using Android.OS;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace MoneyMap.Services
+﻿namespace MoneyMap.Services
 {
-    public class UserSession
+    public static class UserSession
     {
         public static int? LoggedInUserId { get; set; }
         public static string LoggedInUserName { get; set; }
+        public static string FirebaseUid { get; set; }
+        public static bool IsAdmin { get; set; }
 
-        public static void SetUser(int userId, string fullName)
+        public static void SetUser(int userId, string fullName, string firebaseUid = null)
         {
             LoggedInUserId = userId;
             LoggedInUserName = fullName;
+            FirebaseUid = firebaseUid;
+            IsAdmin = false;
+        }
+
+        public static void SetAdmin(string adminName)
+        {
+            LoggedInUserId = null;
+            LoggedInUserName = adminName;
+            FirebaseUid = null;
+            IsAdmin = true;
         }
 
         public static void Clear()
         {
             LoggedInUserId = null;
             LoggedInUserName = null;
+            FirebaseUid = null;
+            IsAdmin = false;
         }
 
-        public static bool IsLoggedIn => LoggedInUserId != null;
+        public static bool IsLoggedIn => IsAdmin || LoggedInUserId != null;
     }
 }
