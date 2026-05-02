@@ -470,44 +470,14 @@ namespace MoneyMap.Activities
 
                 int userId = UserSession.LoggedInUserId ?? 0;
 
+                // שווי תיק (כמו שהיה)
                 var totalValueIls = await App.PortfolioService.GetPortfolioTotalValueAsync(userId);
                 _portfolioValue.Text = "שווי תיק: " + await SafeFormatAsync(totalValueIls);
 
-                decimal totalPnlIls = 0m;
-                int failedSymbols = 0;
-
-                try
-                {
-                    if (App.InvestmentService != null && App.StockPriceService != null)
-                    {
-                        var list = await App.InvestmentService.GetInvestmentsForUserAsync(userId);
-                        if (list != null)
-                        {
-                            foreach (var inv in list)
-                            {
-                                try
-                                {
-                                    var current = await App.StockPriceService.GetPriceOrFetch(inv.StockSymbol);
-                                    var curVal = (decimal)current * inv.Quantity;
-                                    var cost = inv.BuyPrice * inv.Quantity;
-                                    totalPnlIls += (curVal - cost);
-                                }
-                                catch
-                                {
-                                    failedSymbols++;
-                                }
-                            }
-                        }
-                    }
-                }
-                catch
-                {
-                }
+                // 🔥 תיקון: משתמשים בשירות המרכזי במקום חישוב ידני
+                var totalPnlIls = await App.PortfolioService.GetPortfolioPnLAsync(userId);
 
                 _portfolioPnL.Text = "רווח/הפסד: " + await SafeFormatAsync(totalPnlIls);
-
-                if (failedSymbols > 0)
-                    Toast.MakeText(this, $"הערה: {failedSymbols} סמלים לא חושבו (API/רשת).", ToastLength.Short).Show();
             }
             catch (Exception ex)
             {
@@ -520,7 +490,6 @@ namespace MoneyMap.Activities
                 Toast.MakeText(this, "שגיאה בטעינת ההשקעות: " + ex.Message, ToastLength.Long).Show();
             }
         }
-
         public override void OnRequestPermissionsResult(
             int requestCode,
             string[] permissions,

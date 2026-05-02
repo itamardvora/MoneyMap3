@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/addExpenseScrollView"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
     android:background="#F8FAFC"
-    android:padding="10dp">
+    android:padding="10dp"
+    android:clipToPadding="false">
 
     <LinearLayout
         android:orientation="vertical"
@@ -11,7 +14,8 @@
         android:layout_height="wrap_content"
         android:background="#FFFFFF"
         android:elevation="2dp"
-        android:padding="12dp">
+        android:padding="12dp"
+        android:paddingBottom="80dp">
 
         <TextView
             android:layout_width="wrap_content"
@@ -47,6 +51,8 @@
             android:background="#F8FAFC"
             android:gravity="center_vertical"
             android:hint="yyyy-mm-dd"
+            android:focusable="false"
+            android:clickable="true"
             android:paddingLeft="14dp"
             android:paddingRight="14dp"
             android:textColor="#0F172A"
@@ -69,6 +75,7 @@
             android:background="#F8FAFC"
             android:gravity="center_vertical"
             android:hint="לדוגמה: קפה, סופר..."
+            android:inputType="text"
             android:paddingLeft="14dp"
             android:paddingRight="14dp"
             android:textColor="#0F172A"
@@ -148,5 +155,6 @@
             android:textColor="#FFFFFF"
             android:textSize="15sp"
             android:textStyle="bold" />
+
     </LinearLayout>
 </ScrollView>

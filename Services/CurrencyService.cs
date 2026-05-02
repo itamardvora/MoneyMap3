@@ -117,16 +117,36 @@ namespace MoneyMap.Services
         {
             fromCode = Norm(fromCode);
             toCode = Norm(toCode);
-            if (fromCode == toCode) return 1m;
 
-            var rFrom = await _ratesRepo.GetRateAsync(fromCode);
-            var rTo = await _ratesRepo.GetRateAsync(toCode);
+            if (fromCode == toCode)
+                return 1m;
 
-            if (rFrom == null || rTo == null || rFrom.RateToILS == 0 || rTo.RateToILS == 0)
-                return null;
+            decimal fromToIls = 1m;
+            decimal toToIls = 1m;
 
-            return rFrom.RateToILS / rTo.RateToILS;
+            if (fromCode != "ILS")
+            {
+                var rFrom = await _ratesRepo.GetRateAsync(fromCode);
+
+                if (rFrom == null || rFrom.RateToILS <= 0m)
+                    return null;
+
+                fromToIls = rFrom.RateToILS;
+            }
+
+            if (toCode != "ILS")
+            {
+                var rTo = await _ratesRepo.GetRateAsync(toCode);
+
+                if (rTo == null || rTo.RateToILS <= 0m)
+                    return null;
+
+                toToIls = rTo.RateToILS;
+            }
+
+            return fromToIls / toToIls;
         }
+
 
         // --- ניהול המטבע המועדף ---
         public Task<string> GetPreferredCurrencyCodeAsync()

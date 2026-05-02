@@ -1,4 +1,4 @@
-﻿// MoneyMap/Services/PortfolioService.cs
+﻿
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -25,6 +25,21 @@ namespace MoneyMap.Services
         }
 
         private static string Norm(string s) => (s ?? "").Trim().ToUpperInvariant();
+
+        private decimal GetCostIls(Investment inv)
+        {
+            if (inv == null)
+                return 0m;
+
+            if (inv.TotalInIls > 0m)
+                return inv.TotalInIls;
+
+            var fx = inv.FxRateToIlsAtPurchase > 0m
+                ? inv.FxRateToIlsAtPurchase
+                : 1m;
+
+            return inv.BuyPrice * inv.Quantity * fx;
+        }
 
         private async Task<Dictionary<string, decimal>> BuildPriceMap(IEnumerable<string> symbols)
         {
@@ -67,18 +82,15 @@ namespace MoneyMap.Services
             }
         }
 
-        public Task<decimal> GetPortfolioTotalValueAsync(int userId)
-            => GetTotalPortfolioValue(userId);
-
-        // שווי תיק כולל בשקלים
-        public async Task<decimal> GetTotalPortfolioValue(int userId)
+        public async Task<PortfolioSummary> GetPortfolioSummaryAsync(int userId)
         {
+            var summary = new PortfolioSummary();
+
             var list = await _investments.GetAllByUser(userId);
             if (list == null || list.Count == 0)
-                return 0m;
+                return summary;
 
             var priceMap = await BuildPriceMap(list.Select(i => i.StockSymbol));
-            decimal totalIls = 0m;
 
             foreach (var inv in list)
             {
@@ -87,44 +99,50 @@ namespace MoneyMap.Services
                 if (!priceMap.TryGetValue(sym, out var currentPriceUsd))
                     continue;
 
+                var costIls = GetCostIls(inv);
+
                 var currentValueUsd = currentPriceUsd * inv.Quantity;
                 var currentValueIls = await ConvertUsdToIlsAsync(currentValueUsd);
 
-                totalIls += currentValueIls;
+                summary.TotalCostIls += costIls;
+                summary.TotalValueIls += currentValueIls;
+                summary.TotalProfitIls += currentValueIls - costIls;
             }
 
-            return totalIls;
+            summary.ReturnPercent = summary.TotalCostIls == 0m
+                ? 0m
+                : (summary.TotalProfitIls / summary.TotalCostIls) * 100m;
+
+            return summary;
         }
 
-        // רווח/הפסד כולל בשקלים
+        public async Task<decimal> GetPortfolioTotalValueAsync(int userId)
+        {
+            var summary = await GetPortfolioSummaryAsync(userId);
+            return summary.TotalValueIls;
+        }
+
+        public Task<decimal> GetTotalPortfolioValue(int userId)
+            => GetPortfolioTotalValueAsync(userId);
+
         public async Task<decimal> GetPortfolioPnLAsync(int userId)
         {
-            var list = await _investments.GetAllByUser(userId);
-            if (list == null || list.Count == 0)
-                return 0m;
-
-            var priceMap = await BuildPriceMap(list.Select(i => i.StockSymbol));
-            decimal totalPnlIls = 0m;
-
-            foreach (var inv in list)
-            {
-                var sym = Norm(inv.StockSymbol);
-
-                if (!priceMap.TryGetValue(sym, out var currentPriceUsd))
-                    continue;
-
-                var costIls = inv.BuyPrice * inv.Quantity;
-
-                var currentValueUsd = currentPriceUsd * inv.Quantity;
-                var currentValueIls = await ConvertUsdToIlsAsync(currentValueUsd);
-
-                totalPnlIls += currentValueIls - costIls;
-            }
-
-            return totalPnlIls;
+            var summary = await GetPortfolioSummaryAsync(userId);
+            return summary.TotalProfitIls;
         }
 
-        // מעשיר השקעות במחיר נוכחי בדולר
+        public async Task<decimal> GetPortfolioTotalCostAsync(int userId)
+        {
+            var summary = await GetPortfolioSummaryAsync(userId);
+            return summary.TotalCostIls;
+        }
+
+        public async Task<decimal> GetPortfolioReturnPercentAsync(int userId)
+        {
+            var summary = await GetPortfolioSummaryAsync(userId);
+            return summary.ReturnPercent;
+        }
+
         public async Task<List<Investment>> EnrichInvestmentsWithPrices(List<Investment> investments)
         {
             if (investments == null || investments.Count == 0)
@@ -147,8 +165,10 @@ namespace MoneyMap.Services
         public async Task<List<SymbolAggregate>> GetAggregatedBySymbol(int userId)
         {
             var list = await _investments.GetAllByUser(userId);
-
             var dict = new Dictionary<string, SymbolAggregate>(StringComparer.OrdinalIgnoreCase);
+
+            if (list == null)
+                return dict.Values.ToList();
 
             foreach (var inv in list)
             {
@@ -161,7 +181,7 @@ namespace MoneyMap.Services
                 }
 
                 aggr.TotalQuantity += inv.Quantity;
-                aggr.TotalInvested += inv.BuyPrice * inv.Quantity;
+                aggr.TotalInvested += GetCostIls(inv);
             }
 
             return dict.Values.ToList();
@@ -172,17 +192,20 @@ namespace MoneyMap.Services
             var sym = Norm(symbol);
             var list = await _investments.GetBySymbol(userId, sym);
 
-            var priceMap = await BuildPriceMap(new[] { sym });
-            priceMap.TryGetValue(sym, out var currentPriceUsd);
-
             decimal investedIls = 0m;
             decimal qty = 0m;
 
-            foreach (var inv in list)
+            if (list != null)
             {
-                investedIls += inv.BuyPrice * inv.Quantity;
-                qty += inv.Quantity;
+                foreach (var inv in list)
+                {
+                    investedIls += GetCostIls(inv);
+                    qty += inv.Quantity;
+                }
             }
+
+            var priceMap = await BuildPriceMap(new[] { sym });
+            priceMap.TryGetValue(sym, out var currentPriceUsd);
 
             var currentValueUsd = currentPriceUsd * qty;
             var currentValueIls = await ConvertUsdToIlsAsync(currentValueUsd);
@@ -249,6 +272,14 @@ namespace MoneyMap.Services
             => _investments.GetBySymbol(userId, Norm(stockSymbol));
     }
 
+    public class PortfolioSummary
+    {
+        public decimal TotalValueIls { get; set; }
+        public decimal TotalCostIls { get; set; }
+        public decimal TotalProfitIls { get; set; }
+        public decimal ReturnPercent { get; set; }
+    }
+
     public class SymbolAggregate
     {
         public string Symbol { get; set; }
@@ -262,16 +293,9 @@ namespace MoneyMap.Services
         public decimal TotalQuantity { get; set; }
         public decimal TotalInvested { get; set; }
 
-        // מחיר מניה נוכחי בדולר
         public decimal CurrentPrice { get; set; }
-
-        // שווי נוכחי בשקלים
         public decimal CurrentValue { get; set; }
-
-        // רווח/הפסד בשקלים
         public decimal Profit { get; set; }
-
-        // 0.12 = 12%
         public decimal Return { get; set; }
     }
 

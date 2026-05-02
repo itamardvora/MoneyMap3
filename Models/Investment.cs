@@ -27,7 +27,7 @@ namespace MoneyMap.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-        [Ignore]
+        [Ignore]// משהו שכל הזמןמשתנה
         public double CurrentPrice { get; set; }
 
         // --- מטבע מקור של הקנייה (ILS / USD / EUR). ברירת מחדל ILS.
