@@ -4,11 +4,7 @@
     {
         private readonly object _lock = new object();
 
-        public bool CategoriesChanged { get; private set; }
-        public bool BudgetsChanged { get; private set; }
-        public bool ExpensesChanged { get; private set; }
-        public bool InvestmentsChanged { get; private set; }
-        public bool IncomesChanged { get; private set; }
+        private bool _hasPendingChanges;
 
         public bool HasPendingChanges
         {
@@ -16,38 +12,17 @@
             {
                 lock (_lock)
                 {
-                    return CategoriesChanged ||
-                           BudgetsChanged ||
-                           ExpensesChanged ||
-                           InvestmentsChanged ||
-                           IncomesChanged;
+                    return _hasPendingChanges;
                 }
             }
         }
 
-        public void MarkCategoriesChanged()
+        public void MarkChanged()
         {
-            lock (_lock) CategoriesChanged = true;
-        }
-
-        public void MarkBudgetsChanged()
-        {
-            lock (_lock) BudgetsChanged = true;
-        }
-
-        public void MarkExpensesChanged()
-        {
-            lock (_lock) ExpensesChanged = true;
-        }
-
-        public void MarkInvestmentsChanged()
-        {
-            lock (_lock) InvestmentsChanged = true;
-        }
-
-        public void MarkIncomesChanged()
-        {
-            lock (_lock) IncomesChanged = true;
+            lock (_lock)
+            {
+                _hasPendingChanges = true;
+            }
         }
 
         public BackupSnapshot CreateSnapshot()
@@ -56,11 +31,7 @@
             {
                 return new BackupSnapshot
                 {
-                    CategoriesChanged = CategoriesChanged,
-                    BudgetsChanged = BudgetsChanged,
-                    ExpensesChanged = ExpensesChanged,
-                    InvestmentsChanged = InvestmentsChanged,
-                    IncomesChanged = IncomesChanged
+                    HasPendingChanges = _hasPendingChanges
                 };
             }
         }
@@ -71,28 +42,24 @@
 
             lock (_lock)
             {
-                if (snapshot.CategoriesChanged) CategoriesChanged = false;
-                if (snapshot.BudgetsChanged) BudgetsChanged = false;
-                if (snapshot.ExpensesChanged) ExpensesChanged = false;
-                if (snapshot.InvestmentsChanged) InvestmentsChanged = false;
-                if (snapshot.IncomesChanged) IncomesChanged = false;
+                if (snapshot.HasPendingChanges)
+                {
+                    _hasPendingChanges = false;
+                }
             }
         }
     }
 
     public class BackupSnapshot
     {
-        public bool CategoriesChanged { get; set; }
-        public bool BudgetsChanged { get; set; }
-        public bool ExpensesChanged { get; set; }
-        public bool InvestmentsChanged { get; set; }
-        public bool IncomesChanged { get; set; }
+        public bool HasPendingChanges { get; set; }
 
-        public bool HasAny =>
-            CategoriesChanged ||
-            BudgetsChanged ||
-            ExpensesChanged ||
-            InvestmentsChanged ||
-            IncomesChanged;
+        public bool HasAny
+        {
+            get
+            {
+                return HasPendingChanges;
+            }
+        }
     }
 }

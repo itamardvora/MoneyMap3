@@ -96,7 +96,7 @@ namespace MoneyMap.Services
 
         // פונקציות תשואה/רווח – ישתמשו בעתיד אם תרצה
         public async Task<decimal> CalculateProfitAsync(Investment inv)
-        {
+        {              
             if (inv == null) return 0m;
             if (_stockPriceService == null) return 0m;
 

@@ -13,6 +13,7 @@ using Xamarin.Essentials;
 using MoneyMap.Services;
 using MoneyMap.Adapters;
 using MoneyMap.Models;
+using Android.Views.InputMethods;
 
 namespace MoneyMap.Activities
 {
@@ -154,10 +155,30 @@ namespace MoneyMap.Activities
         {
             if (dialog?.Window == null) return;
 
+            dialog.Window.SetSoftInputMode(SoftInput.AdjustResize);
+
             int width = (int)(Resources.DisplayMetrics.WidthPixels * 0.92);
             int height = (int)(Resources.DisplayMetrics.HeightPixels * 0.85);
 
             dialog.Window.SetLayout(width, height);
+        }
+
+        private void HideKeyboard(View view = null)
+        {
+            try
+            {
+                var imm = (InputMethodManager)GetSystemService(InputMethodService);
+                var targetView = view ?? CurrentFocus ?? Window?.DecorView;
+
+                if (imm != null && targetView != null)
+                {
+                    imm.HideSoftInputFromWindow(targetView.WindowToken, HideSoftInputFlags.None);
+                    targetView.ClearFocus();
+                }
+            }
+            catch
+            {
+            }
         }
 
         private async Task EnsureUserSessionAsync()
@@ -197,7 +218,7 @@ namespace MoneyMap.Activities
             decimal totalIncome = incomes.Sum(i => i.Amount);
             decimal totalBudget = summaries.Sum(s => s.MonthlyLimit);
             decimal totalSpent = expenses.Sum(e => e.Amount);
-            decimal remaining = totalIncome - totalSpent;
+            decimal remaining = totalBudget - totalSpent;
 
             _totalIncomeText.Text = await SafeFormatAsync(totalIncome, 2);
             _totalBudgetText.Text = await SafeFormatAsync(totalBudget, 2);
@@ -210,10 +231,9 @@ namespace MoneyMap.Activities
 
             var preferred = await SafePreferredCodeAsync();
 
-            var rows = new List<FormattedBudgetRow>();
-            foreach (var s in summaries.OrderBy(x => x.CategoryName))
-            {
-                rows.Add(new FormattedBudgetRow
+            var rows = summaries
+                .OrderBy(x => x.CategoryName)
+                .Select(async s => new FormattedBudgetRow
                 {
                     CategoryID = s.CategoryID,
                     CategoryName = s.CategoryName,
@@ -223,10 +243,14 @@ namespace MoneyMap.Activities
                     Progress = s.MonthlyLimit > 0
                         ? (int)Math.Round((double)(s.Spent / s.MonthlyLimit * 100m))
                         : 0
-                });
-            }
+                })
+                .ToList();
 
-            _adapter.UpdateData(rows);
+            var finalRows = new List<FormattedBudgetRow>();
+            foreach (var task in rows)
+                finalRows.Add(await task);
+
+            _adapter.UpdateData(finalRows);
             _incomeAdapter.Update(incomes.OrderByDescending(i => i.Date).ToList());
         }
 
@@ -252,6 +276,71 @@ namespace MoneyMap.Activities
             return $"{monthNames[date.Month]} {date.Year}";
         }
 
+        private void AttachDatePicker(EditText input, DateTime baseDate, bool monthOnly)
+        {
+            if (input == null) return;
+
+            input.Focusable = false;
+            input.Clickable = true;
+
+            input.Click += (s, e) =>
+            {
+                var dp = new DatePickerDialog(this, (sender, ev) =>
+                {
+                    if (monthOnly)
+                    {
+                        var d = new DateTime(ev.Date.Year, ev.Date.Month, 1);
+                        input.Text = d.ToString("yyyy-MM-01");
+                    }
+                    else
+                    {
+                        input.Text = ev.Date.ToString("yyyy-MM-dd");
+                    }
+                }, baseDate.Year, baseDate.Month - 1, 1);
+
+                dp.Show();
+            };
+        }
+
+        private void SetSpinnerData(Spinner spinner, List<string> items)
+        {
+            var adapter = new ArrayAdapter<string>(
+                this,
+                Android.Resource.Layout.SimpleSpinnerItem,
+                items);
+
+            adapter.SetDropDownViewResource(Android.Resource.Layout.SimpleSpinnerDropDownItem);
+            spinner.Adapter = adapter;
+        }
+
+        private async Task<decimal> ConvertToIlsAsync(decimal amountInDisplayCurrency)
+        {
+            var preferred = await SafePreferredCodeAsync();
+
+            if (string.Equals(preferred, "ILS", StringComparison.OrdinalIgnoreCase) ||
+                App.CurrencyService == null)
+            {
+                return amountInDisplayCurrency;
+            }
+
+            try
+            {
+                var rate = await App.CurrencyService.GetRateAsync(preferred, "ILS");
+                if (rate.HasValue && rate.Value > 0m)
+                    return amountInDisplayCurrency * rate.Value;
+            }
+            catch
+            {
+            }
+
+            return amountInDisplayCurrency;
+        }
+
+        private bool TryParsePositiveDecimal(string text, out decimal value)
+        {
+            return decimal.TryParse(text, out value) && value > 0m;
+        }
+
         private async void ShowAddIncomeDialog()
         {
             var dialogView = LayoutInflater.Inflate(Resource.Layout.dialog_add_income, null);
@@ -267,18 +356,7 @@ namespace MoneyMap.Activities
             var confirmBtn = dialogView.FindViewById<Button>(Resource.Id.confirmAddIncomeButton);
 
             dateInput.Text = _selectedMonth.ToString("yyyy-MM-01");
-            dateInput.Focusable = false;
-
-            dateInput.Click += (s, e) =>
-            {
-                var t = _selectedMonth;
-                var dp = new DatePickerDialog(this, (sender, ev) =>
-                {
-                    dateInput.Text = ev.Date.ToString("yyyy-MM-dd");
-                }, t.Year, t.Month - 1, 1);
-
-                dp.Show();
-            };
+            AttachDatePicker(dateInput, _selectedMonth, false);
 
             var dialog = builder.Create();
             dialog.Show();
@@ -296,7 +374,7 @@ namespace MoneyMap.Activities
                         return;
                     }
 
-                    if (!decimal.TryParse(amountInput.Text, out var amountInDisplayCurrency) || amountInDisplayCurrency <= 0)
+                    if (!TryParsePositiveDecimal(amountInput.Text, out var amountInDisplayCurrency))
                     {
                         Toast.MakeText(this, "סכום לא תקין", ToastLength.Short).Show();
                         return;
@@ -308,25 +386,14 @@ namespace MoneyMap.Activities
                         return;
                     }
 
-                    decimal amountIls = amountInDisplayCurrency;
-                    var preferred = await SafePreferredCodeAsync();
-
-                    if (!string.Equals(preferred, "ILS", StringComparison.OrdinalIgnoreCase) &&
-                        App.CurrencyService != null)
-                    {
-                        try
-                        {
-                            var rate = await App.CurrencyService.GetRateAsync(preferred, "ILS");
-                            if (rate.HasValue && rate.Value > 0m)
-                                amountIls = amountInDisplayCurrency * rate.Value;
-                        }
-                        catch { }
-                    }
+                    var amountIls = await ConvertToIlsAsync(amountInDisplayCurrency);
 
                     await App.IncomeService.AddIncome(userId, amountIls, sourceInput.Text, date);
 
                     _selectedMonth = new DateTime(date.Year, date.Month, 1);
                     await LoadBudgetSummary();
+
+                    HideKeyboard(dialogView);
                     dialog.Dismiss();
                 }
                 catch (Exception ex)
@@ -351,19 +418,7 @@ namespace MoneyMap.Activities
             var confirmBtn = dialogView.FindViewById<Button>(Resource.Id.confirmAddBudgetButton);
 
             monthInput.Text = new DateTime(_selectedMonth.Year, _selectedMonth.Month, 1).ToString("yyyy-MM-01");
-            monthInput.Focusable = false;
-
-            monthInput.Click += (s, e) =>
-            {
-                var t = _selectedMonth;
-                var dp = new DatePickerDialog(this, (sender, ev) =>
-                {
-                    var d = new DateTime(ev.Date.Year, ev.Date.Month, 1);
-                    monthInput.Text = d.ToString("yyyy-MM-01");
-                }, t.Year, t.Month - 1, 1);
-
-                dp.Show();
-            };
+            AttachDatePicker(monthInput, _selectedMonth, true);
 
             int userId = UserSession.LoggedInUserId ?? 0;
             var categories = await App.CategoryService.GetCategoriesForUser(userId);
@@ -371,9 +426,7 @@ namespace MoneyMap.Activities
             var names = categories.Select(c => c.CategoryName).ToList();
             names.Add("➕ קטגוריה חדשה");
 
-            var spinnerAdapter = new ArrayAdapter<string>(this, Android.Resource.Layout.SimpleSpinnerItem, names);
-            spinnerAdapter.SetDropDownViewResource(Android.Resource.Layout.SimpleSpinnerDropDownItem);
-            categorySpinner.Adapter = spinnerAdapter;
+            SetSpinnerData(categorySpinner, names);
 
             var dialog = builder.Create();
             dialog.Show();
@@ -420,19 +473,32 @@ namespace MoneyMap.Activities
                         return;
                     }
 
-                    var monthOk = DateTime.TryParse(monthInput.Text, out var month);
-                    var limitOk = decimal.TryParse(amountInput.Text, out var monthlyLimit);
-
-                    if (!monthOk || !limitOk || monthlyLimit <= 0)
+                    if (!DateTime.TryParse(monthInput.Text, out var month))
                     {
-                        Toast.MakeText(this, "תאריך או סכום לא תקינים", ToastLength.Short).Show();
+                        Toast.MakeText(this, "תאריך לא תקין", ToastLength.Short).Show();
                         return;
                     }
 
-                    await App.BudgetService.AddUserBudget(userId, categories[idx].CategoryID, monthlyLimit, month);
+                    if (!TryParsePositiveDecimal(amountInput.Text, out var monthlyLimit))
+                    {
+                        Toast.MakeText(this, "סכום לא תקין", ToastLength.Short).Show();
+                        return;
+                    }
+
+                    var monthlyLimitIls = await ConvertToIlsAsync(monthlyLimit);
+
+                    await App.BudgetService.AddUserBudget(
+                        userId,
+                        categories[idx].CategoryID,
+                        monthlyLimitIls,
+                        month
+                    );
+
+                    HideKeyboard(dialogView);
 
                     _selectedMonth = new DateTime(month.Year, month.Month, 1);
                     await LoadBudgetSummary();
+
                     dialog.Dismiss();
                 }
                 catch (Exception ex)
@@ -460,18 +526,7 @@ namespace MoneyMap.Activities
             var confirmBtn = dialogView.FindViewById<Button>(Resource.Id.confirmAddExpenseButton);
 
             dateInput.Text = _selectedMonth.ToString("yyyy-MM-01");
-            dateInput.Focusable = false;
-
-            dateInput.Click += (s, e) =>
-            {
-                var t = _selectedMonth;
-                var dp = new DatePickerDialog(this, (sender, ev) =>
-                {
-                    dateInput.Text = ev.Date.ToString("yyyy-MM-dd");
-                }, t.Year, t.Month - 1, 1);
-
-                dp.Show();
-            };
+            AttachDatePicker(dateInput, _selectedMonth, false);
 
             int userId = UserSession.LoggedInUserId ?? 0;
             var budgetStatuses = await App.BudgetService.GetUserBudgetStatus(userId, _selectedMonth);
@@ -491,10 +546,7 @@ namespace MoneyMap.Activities
             }
 
             var names = categories.Select(c => c.CategoryName).ToList();
-
-            var spinnerAdapter = new ArrayAdapter<string>(this, Android.Resource.Layout.SimpleSpinnerItem, names);
-            spinnerAdapter.SetDropDownViewResource(Android.Resource.Layout.SimpleSpinnerDropDownItem);
-            categorySpinner.Adapter = spinnerAdapter;
+            SetSpinnerData(categorySpinner, names);
 
             string receiptPath = null;
 
@@ -565,7 +617,7 @@ namespace MoneyMap.Activities
                         return;
                     }
 
-                    if (!decimal.TryParse(amountInput.Text, out var amountInDisplayCurrency) || amountInDisplayCurrency <= 0)
+                    if (!TryParsePositiveDecimal(amountInput.Text, out var amountInDisplayCurrency))
                     {
                         Toast.MakeText(this, "סכום לא תקין", ToastLength.Short).Show();
                         return;
@@ -578,21 +630,7 @@ namespace MoneyMap.Activities
                     }
 
                     var selectedCategory = categories[categorySpinner.SelectedItemPosition];
-
-                    decimal amountIls = amountInDisplayCurrency;
-                    var preferred = await SafePreferredCodeAsync();
-
-                    if (!string.Equals(preferred, "ILS", StringComparison.OrdinalIgnoreCase) &&
-                        App.CurrencyService != null)
-                    {
-                        try
-                        {
-                            var rate = await App.CurrencyService.GetRateAsync(preferred, "ILS");
-                            if (rate.HasValue && rate.Value > 0m)
-                                amountIls = amountInDisplayCurrency * rate.Value;
-                        }
-                        catch { }
-                    }
+                    var amountIls = await ConvertToIlsAsync(amountInDisplayCurrency);
 
                     await App.ExpenseService.AddExpense(
                         userId,
@@ -605,6 +643,8 @@ namespace MoneyMap.Activities
 
                     _selectedMonth = new DateTime(date.Year, date.Month, 1);
                     await LoadBudgetSummary();
+
+                    HideKeyboard(dialogView);
                     dialog.Dismiss();
                 }
                 catch (Exception ex)
@@ -624,7 +664,9 @@ namespace MoneyMap.Activities
                     if (!string.IsNullOrWhiteSpace(code)) return code;
                 }
             }
-            catch { }
+            catch
+            {
+            }
 
             return "ILS";
         }
@@ -637,7 +679,9 @@ namespace MoneyMap.Activities
                 if (App.CurrencyService != null)
                     return await App.CurrencyService.FormatAsync(amountIls, "ILS", code, decimals);
             }
-            catch { }
+            catch
+            {
+            }
 
             return amountIls.ToString("N" + decimals) + " ₪";
         }
@@ -649,7 +693,9 @@ namespace MoneyMap.Activities
                 if (App.CurrencyService != null && !string.IsNullOrWhiteSpace(target))
                     return await App.CurrencyService.FormatAsync(amountIls, "ILS", target, decimals);
             }
-            catch { }
+            catch
+            {
+            }
 
             return amountIls.ToString("N" + decimals) + " ₪";
         }

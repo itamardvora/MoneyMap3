@@ -29,13 +29,6 @@ namespace MoneyMap.Models
 
         public string Role { get; set; } = "User";
 
-        [OneToMany(CascadeOperations = CascadeOperation.All)]
-        public List<Investment> Investments { get; set; }
-
-        [OneToMany(CascadeOperations = CascadeOperation.All)]
-        public List<Budget> Budget { get; set; }
-
-        [OneToMany(CascadeOperations = CascadeOperation.All)]
-        public List<Category> Categories { get; set; }
+       
     }
 }

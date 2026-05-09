@@ -18,36 +18,43 @@ namespace MoneyMap.DAL
         public async Task<int> AddInvestment(Investment inv)
         {
             var result = await _db.InsertAsync(inv);
-            App.BackupState?.MarkInvestmentsChanged();
+            App.BackupState?.MarkChanged();
+
             return result;
         }
 
         public async Task<int> DeleteInvestment(int investmentId, int userId)
         {
             var result = await _db.Table<Investment>()
-               .Where(x => x.InvestmentID == investmentId && x.UserID == userId)
-               .DeleteAsync();
+                .Where(x => x.InvestmentID == investmentId && x.UserID == userId)
+                .DeleteAsync();
 
             if (result > 0)
-                App.BackupState?.MarkInvestmentsChanged();
+                App.BackupState?.MarkChanged();
 
             return result;
         }
 
-        public Task<List<Investment>> GetAllByUser(int userId) =>
-            _db.Table<Investment>()
-               .Where(x => x.UserID == userId)
-               .OrderByDescending(x => x.BuyDate)
-               .ToListAsync();
+        public Task<List<Investment>> GetAllByUser(int userId)
+        {
+            return _db.Table<Investment>()
+                .Where(x => x.UserID == userId)
+                .OrderByDescending(x => x.BuyDate)
+                .ToListAsync();
+        }
 
-        public Task<Investment> GetById(int id, int userId) =>
-            _db.Table<Investment>()
-               .Where(x => x.InvestmentID == id && x.UserID == userId)
-               .FirstOrDefaultAsync();
+        public Task<Investment> GetById(int id, int userId)
+        {
+            return _db.Table<Investment>()
+                .Where(x => x.InvestmentID == id && x.UserID == userId)
+                .FirstOrDefaultAsync();
+        }
 
-        public Task<List<Investment>> GetBySymbol(int userId, string symbol) =>
-            _db.Table<Investment>()
-               .Where(x => x.UserID == userId && x.StockSymbol == symbol)
-               .ToListAsync();
+        public Task<List<Investment>> GetBySymbol(int userId, string symbol)
+        {
+            return _db.Table<Investment>()
+                .Where(x => x.UserID == userId && x.StockSymbol == symbol)
+                .ToListAsync();
+        }
     }
 }

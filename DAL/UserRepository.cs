@@ -99,26 +99,26 @@ namespace MoneyMap.DAL
                       .DeleteAsync();
         }
 
-        public async Task LinkFirebaseUidAsync(int userId, string firebaseUid)
-        {
-            var user = await GetUserById(userId);
-            if (user == null) return;
+        //public async Task LinkFirebaseUidAsync(int userId, string firebaseUid)
+        //{
+        //    var user = await GetUserById(userId);
+        //    if (user == null) return;
 
-            user.FirebaseUid = firebaseUid;
-            await _db.UpdateAsync(user);
-        }
+        //    user.FirebaseUid = firebaseUid;
+        //    await _db.UpdateAsync(user);
+        //}
 
-        public async Task<User> ValidateLogin(string email, string password)
-        {
-            if (!string.IsNullOrWhiteSpace(email))
-                email = email.Trim().ToLowerInvariant();
+        //public async Task<User> ValidateLogin(string email, string password)
+        //{
+        //    if (!string.IsNullOrWhiteSpace(email))
+        //        email = email.Trim().ToLowerInvariant();
 
-            var user = await _db.Table<User>()
-                                .Where(u => u.Email == email)
-                                .FirstOrDefaultAsync();
+        //    var user = await _db.Table<User>()
+        //                        .Where(u => u.Email == email)
+        //                        .FirstOrDefaultAsync();
 
-            if (user == null) return null;
-            return user.Password == password ? user : null;
-        }
+        //    if (user == null) return null;
+        //    return user.Password == password ? user : null;
+        //}
     }
 }

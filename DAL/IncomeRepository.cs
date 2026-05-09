@@ -19,7 +19,8 @@ namespace MoneyMap.DAL
 
         private async Task EnsureSchemaAsync()
         {
-            if (_schemaEnsured) return;
+            if (_schemaEnsured)
+                return;
 
             await _db.CreateTableAsync<Income>();
             await _db.ExecuteAsync("CREATE INDEX IF NOT EXISTS idx_incomes_user_date ON IncomesTable (UserID, Date)");
@@ -30,15 +31,15 @@ namespace MoneyMap.DAL
         public async Task AddIncome(Income income)
         {
             await _db.InsertAsync(income);
-            App.BackupState?.MarkIncomesChanged();
+            App.BackupState?.MarkChanged();
         }
 
         public Task<List<Income>> GetAllByUser(int userId)
         {
             return _db.Table<Income>()
-                      .Where(i => i.UserID == userId)
-                      .OrderByDescending(i => i.Date)
-                      .ToListAsync();
+                .Where(i => i.UserID == userId)
+                .OrderByDescending(i => i.Date)
+                .ToListAsync();
         }
 
         public Task<List<Income>> GetUserIncomes(int userId, DateTime month)
@@ -47,8 +48,8 @@ namespace MoneyMap.DAL
             var end = start.AddMonths(1);
 
             return _db.Table<Income>()
-                      .Where(i => i.UserID == userId && i.Date >= start && i.Date < end)
-                      .ToListAsync();
+                .Where(i => i.UserID == userId && i.Date >= start && i.Date < end)
+                .ToListAsync();
         }
 
         public async Task<decimal> GetTotalIncomeByMonth(int userId, DateTime month)
@@ -65,13 +66,13 @@ namespace MoneyMap.DAL
         public async Task DeleteIncome(int userId, int incomeId)
         {
             var income = await _db.Table<Income>()
-                                  .Where(i => i.IncomeID == incomeId && i.UserID == userId)
-                                  .FirstOrDefaultAsync();
+                .Where(i => i.IncomeID == incomeId && i.UserID == userId)
+                .FirstOrDefaultAsync();
 
             if (income != null)
             {
                 await _db.DeleteAsync(income);
-                App.BackupState?.MarkIncomesChanged();
+                App.BackupState?.MarkChanged();
             }
         }
     }

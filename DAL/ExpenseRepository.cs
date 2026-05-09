@@ -25,7 +25,8 @@ namespace MoneyMap.DAL
 
         private async Task EnsureSchemaAsync()
         {
-            if (_schemaEnsured) return;
+            if (_schemaEnsured)
+                return;
 
             await _db.CreateTableAsync<Expense>();
 
@@ -38,21 +39,22 @@ namespace MoneyMap.DAL
             }
 
             await _db.ExecuteAsync("CREATE INDEX IF NOT EXISTS idx_expenses_user_date ON ExpensesTable (UserID, Date)");
+
             _schemaEnsured = true;
         }
 
         public async Task AddExpense(Expense expense)
         {
             await _db.InsertAsync(expense);
-            App.BackupState?.MarkExpensesChanged();
+            App.BackupState?.MarkChanged();
         }
 
         public Task<List<Expense>> GetAllByUser(int userId)
         {
             return _db.Table<Expense>()
-                      .Where(e => e.UserID == userId)
-                      .OrderByDescending(e => e.Date)
-                      .ToListAsync();
+                .Where(e => e.UserID == userId)
+                .OrderByDescending(e => e.Date)
+                .ToListAsync();
         }
 
         public Task<List<Expense>> GetUserExpenses(int userId, DateTime month)
@@ -61,8 +63,8 @@ namespace MoneyMap.DAL
             var end = start.AddMonths(1);
 
             return _db.Table<Expense>()
-                      .Where(e => e.UserID == userId && e.Date >= start && e.Date < end)
-                      .ToListAsync();
+                .Where(e => e.UserID == userId && e.Date >= start && e.Date < end)
+                .ToListAsync();
         }
 
         public Task<List<ExpenseCategoryTotal>> GetExpensesByCategory(int userId, DateTime month)
@@ -84,19 +86,21 @@ namespace MoneyMap.DAL
         public async Task DeleteExpense(int userId, int expenseId)
         {
             var expense = await _db.Table<Expense>()
-                                   .Where(e => e.ExpenseID == expenseId && e.UserID == userId)
-                                   .FirstOrDefaultAsync();
+                .Where(e => e.ExpenseID == expenseId && e.UserID == userId)
+                .FirstOrDefaultAsync();
 
             if (expense != null)
             {
                 await _db.DeleteAsync(expense);
-                App.BackupState?.MarkExpensesChanged();
+                App.BackupState?.MarkChanged();
             }
         }
 
-        public Task<Expense> GetById(int userId, int expenseId) =>
-            _db.Table<Expense>()
-               .Where(e => e.ExpenseID == expenseId && e.UserID == userId)
-               .FirstOrDefaultAsync();
+        public Task<Expense> GetById(int userId, int expenseId)
+        {
+            return _db.Table<Expense>()
+                .Where(e => e.ExpenseID == expenseId && e.UserID == userId)
+                .FirstOrDefaultAsync();
+        }
     }
 }

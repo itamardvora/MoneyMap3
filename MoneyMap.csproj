@@ -80,10 +80,8 @@
     <Compile Include="Services\AlarmScheduler.cs" />
     <Compile Include="Services\BootCompletedReceiver.cs" />
     <Compile Include="Services\ExchangeRatesClient.cs" />
-    <Compile Include="Services\FirebaseAuthService.cs" />
-    <Compile Include="Services\FirebaseBackupService.cs" />
     <Compile Include="Services\FirebaseBackupState.cs" />
-    <Compile Include="Services\FirebaseConfig.cs" />
+    <Compile Include="Services\FireBaseHelper.cs" />
     <Compile Include="Services\IExchangeRatesClient.cs" />
     <Compile Include="Services\IncomeService.cs" />
     <Compile Include="Services\RatesSyncService.cs" />
@@ -124,7 +122,7 @@
     <Compile Include="Services\UserSession.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="google-services.json" />
+    <AndroidAsset Include="Assets\google-services.json" />
     <None Include="Resources\AboutResources.txt" />
     <None Include="Properties\AndroidManifest.xml" />
     <None Include="Assets\AboutAssets.txt" />
@@ -195,6 +193,9 @@
     <PackageReference Include="Xamarin.Firebase.Common">
       <Version>120.0.0.6</Version>
     </PackageReference>
+    <PackageReference Include="Xamarin.Firebase.Firestore">
+      <Version>123.0.3.7</Version>
+    </PackageReference>
     <PackageReference Include="Xamarin.Google.Android.Material" Version="1.0.0.1" />
     <PackageReference Include="Xamarin.Essentials" Version="1.7.5" />
     <PackageReference Include="Xamarin.GooglePlayServices.Base">
@@ -232,11 +233,6 @@
     </AndroidResource>
   </ItemGroup>
   <ItemGroup>
-    <AndroidResource Include="Resources\layout\budget_item.xml">
-      <SubType>Designer</SubType>
-    </AndroidResource>
-  </ItemGroup>
-  <ItemGroup>
     <AndroidResource Include="Resources\layout\dialog_add_expense.xml">
       <SubType>Designer</SubType>
     </AndroidResource>
@@ -265,11 +261,6 @@
     </AndroidResource>
   </ItemGroup>
   <ItemGroup>
-    <AndroidResource Include="Resources\drawable\spinner_bg.xml">
-      <SubType>Designer</SubType>
-    </AndroidResource>
-  </ItemGroup>
-  <ItemGroup>
     <AndroidResource Include="Resources\drawable\ic_home.xml">
       <SubType>Designer</SubType>
     </AndroidResource>
@@ -290,27 +281,7 @@
     </AndroidResource>
   </ItemGroup>
   <ItemGroup>
-    <AndroidBoundLayout Include="Resources\XML\file_paths.xml">
-      <SubType>Designer</SubType>
-    </AndroidBoundLayout>
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidResource Include="Resources\layout\dialog_expenses_list.xml">
-      <SubType>Designer</SubType>
-    </AndroidResource>
-  </ItemGroup>
-  <ItemGroup>
     <AndroidResource Include="Resources\drawable\bg_card.xml">
-      <SubType>Designer</SubType>
-    </AndroidResource>
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidResource Include="Resources\drawable\bg_nav_item.xml">
-      <SubType>Designer</SubType>
-    </AndroidResource>
-  </ItemGroup>
-  <ItemGroup>
-    <AndroidResource Include="Resources\layout\bottom_nav_pretty.xml">
       <SubType>Designer</SubType>
     </AndroidResource>
   </ItemGroup>
@@ -326,6 +297,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="External\" />
+    <Folder Include="Resources\XML\" />
   </ItemGroup>
   <ItemGroup>
     <AndroidResource Include="Resources\drawable\moneymap_logo.png" />

@@ -126,7 +126,7 @@
                         android:layout_height="50dp"
                         android:layout_marginTop="10dp"
                         android:background="#F8FAFC"
-                        android:hint="מחיר קנייה (במטבע המקורי)"
+                        android:hint="מחיר למניה במטבע שבחרת"
                         android:inputType="numberDecimal"
                         android:paddingLeft="14dp"
                         android:paddingRight="14dp"

@@ -38,11 +38,7 @@ namespace MoneyMap.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-        [ManyToOne]
-        public User User { get; set; }
-
-        [ManyToOne]
-        public Category Category { get; set; }
+      
 
 
      

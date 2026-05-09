@@ -50,7 +50,7 @@
             android:id="@+id/passwordInput"
             android:layout_width="match_parent"
             android:layout_height="52dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="10dp"
             android:background="#F8FAFC"
             android:gravity="center_vertical"
             android:hint="סיסמה"
@@ -60,6 +60,15 @@
             android:paddingRight="14dp"
             android:textColor="#0F172A"
             android:textColorHint="#94A3B8" />
+
+        <CheckBox
+            android:id="@+id/rememberMeCheckBox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="14dp"
+            android:text="זכור אותי"
+            android:textColor="#0F172A"
+            android:textSize="14sp" />
 
         <Button
             android:id="@+id/loginButton"
@@ -83,5 +92,7 @@
             android:textColor="#0F172A"
             android:textSize="15sp"
             android:textStyle="bold" />
+
     </LinearLayout>
+
 </RelativeLayout>
