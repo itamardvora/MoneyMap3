@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
 using SQLite;
 using Xamarin.Essentials;
@@ -24,8 +23,9 @@ namespace MoneyMap
         public static CurrencyRateRepository CurrencyRateRepo { get; private set; }
         public static IncomeRepository Incomes { get; private set; }
 
-        public static FirebaseAuthService FirebaseAuthService { get; private set; }
-        public static FirebaseBackupService FirebaseBackupService { get; private set; }
+        // משאירים את זה זמנית כי הרבה Repositories אצלך כנראה קוראים ל:
+        // App.BackupState?.MarkExpensesChanged()
+        // App.BackupState?.MarkInvestmentsChanged()
         public static FirebaseBackupState BackupState { get; private set; }
 
         public static UserService UserService { get; private set; }
@@ -40,39 +40,45 @@ namespace MoneyMap
 
         private static bool _coreInited = false;
         private static bool _fullInited = false;
-        private static readonly SemaphoreSlim _backupLock = new SemaphoreSlim(1, 1);
 
         public static async Task InitAsync()
         {
-            if (IsFullyReady()) return;
+            if (IsFullyReady())
+                return;
 
             if (!_coreInited)
                 await InitForAuthAsync();
 
             var savedUserId = Preferences.Get("LoggedInUserId", 0);
+
             if (savedUserId > 0 && !_fullInited)
                 await InitAfterLoginAsync();
         }
 
         public static async Task InitForAuthAsync()
         {
-            if (_coreInited) return;
+            if (_coreInited)
+                return;
 
             await DatabaseContext.InitAsync();
             Db = DatabaseContext.GetConnection();
 
+            // עדיין נשאר כדי שה-DAL לא יישבר.
+            // בהמשך אפשר להחליף את כל App.BackupState לשיטה חדשה עם Firestore.
             BackupState = new FirebaseBackupState();
-            FirebaseAuthService = new FirebaseAuthService();
 
             Users = new UserRepository(Db);
-            UserService = new UserService(Users, FirebaseAuthService);
+
+            // כבר לא משתמשים ב-FirebaseAuthService הישן.
+            UserService = new UserService(Users);
 
             _coreInited = true;
         }
 
         public static async Task InitAfterLoginAsync()
         {
-            if (_fullInited) return;
+            if (_fullInited)
+                return;
 
             if (!_coreInited)
                 await InitForAuthAsync();
@@ -90,17 +96,9 @@ namespace MoneyMap
             CurrencyRateRepo = new CurrencyRateRepository(Db);
             Incomes = new IncomeRepository(Db);
 
-            FirebaseBackupService = new FirebaseBackupService(
-                FirebaseAuthService,
-                Users,
-                Category,
-                Budgets,
-                Expenses,
-                Investments,
-                Incomes);
-
             CategoryService = new CategoryService(Category);
             await CategoryService.EnsureDefaultCategoriesAsync();
+
             ExpenseService = new ExpenseService(Expenses);
             BudgetService = new BudgetService(Budgets, Expenses, Category);
             IncomeService = new IncomeService(Incomes);
@@ -145,71 +143,53 @@ namespace MoneyMap
             InvestmentService = new InvestmentService(Investments, StockPriceService, CurrencyService);
             PortfolioService = new PortfolioService(Investments, StockPriceService, CurrencyService);
 
-            await TryRestoreBackupIfNeededAsync();
+            // כרגע לא עושים Restore דרך FirebaseBackupService הישן.
+            // בהמשך נעשה Restore חדש דרך Firestore אם תרצה.
 
             _fullInited = true;
         }
 
-        private static async Task TryRestoreBackupIfNeededAsync()
-        {
-            try
-            {
-                var userId = UserSession.LoggedInUserId ?? Preferences.Get("LoggedInUserId", 0);
-                if (userId <= 0)
-                    return;
-
-                if (FirebaseBackupService == null)
-                    return;
-
-                bool restored = await FirebaseBackupService.RestoreIfLocalDataMissingAsync(userId);
-
-                if (restored)
-                {
-                    Log.Info("App.Restore", "Firebase backup restored into local SQLite.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Warn("App.Restore", "Restore failed: " + ex.Message);
-            }
-        }
-
+        // משאירים את הפונקציה כדי שאם יש מקום באפליקציה שקורא לה,
+        // הפרויקט לא יישבר. כרגע היא לא עושה כלום.
         public static async Task TryBackupPendingChangesAsync()
         {
             if (!IsFullyReady())
                 return;
 
-            var userId = UserSession.LoggedInUserId ?? 0;
+            var userId = UserSession.LoggedInUserId ?? Preferences.Get("LoggedInUserId", 0);
+            var firebaseUid = Preferences.Get("FirebaseUid", "");
+
             if (userId <= 0)
+                return;
+
+            if (string.IsNullOrWhiteSpace(firebaseUid))
                 return;
 
             if (BackupState == null || !BackupState.HasPendingChanges)
                 return;
 
-            if (!await _backupLock.WaitAsync(0))
+            var snapshot = BackupState.CreateSnapshot();
+
+            if (snapshot == null || !snapshot.HasAny)
                 return;
 
             try
             {
-                var snapshot = BackupState.CreateSnapshot();
-                if (!snapshot.HasAny)
-                    return;
+                await FireBaseHelper.BackupAllUserDataAsync();
 
-                await FirebaseBackupService.SyncPendingAsync(userId, snapshot);
                 BackupState.Clear(snapshot);
+
+                Log.Info("App.Backup", "Full Firestore backup completed.");
             }
             catch (Exception ex)
             {
-                Log.Warn("App.Backup", "Backup failed: " + ex.Message);
-            }
-            finally
-            {
-                _backupLock.Release();
+                Log.Warn("App.Backup", "Full Firestore backup failed: " + ex.Message);
             }
         }
-
         public static bool IsCoreReady() =>
-            _coreInited && UserService != null && Db != null;
+            _coreInited &&
+            UserService != null &&
+            Db != null;
 
         public static bool IsFullyReady() =>
             _fullInited &&

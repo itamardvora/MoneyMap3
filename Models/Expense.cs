@@ -21,8 +21,6 @@ namespace MoneyMap.Models
         // ✅ השדה היחיד לשמירת קבלה
         public string ReceiptPath { get; set; }
 
-        // קשרים (אופציונלי)
-        [ManyToOne] public User User { get; set; }
-        [ManyToOne] public Category Category { get; set; }
+    
     }
 }

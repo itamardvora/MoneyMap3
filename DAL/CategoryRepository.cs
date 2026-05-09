@@ -28,7 +28,7 @@ namespace MoneyMap.DAL
             };
 
             await _db.InsertAsync(category);
-            App.BackupState?.MarkCategoriesChanged();
+            App.BackupState?.MarkChanged();
 
             return category.CategoryID;
         }
@@ -92,13 +92,16 @@ namespace MoneyMap.DAL
         public async Task DeleteCategory(int userId, int categoryId)
         {
             var category = await _db.Table<Category>()
-                .Where(c => c.CategoryID == categoryId && c.CreatedByUserID == userId && !c.IsSystem)
+                .Where(c =>
+                    c.CategoryID == categoryId &&
+                    c.CreatedByUserID == userId &&
+                    !c.IsSystem)
                 .FirstOrDefaultAsync();
 
             if (category != null)
             {
                 await _db.DeleteAsync(category);
-                App.BackupState?.MarkCategoriesChanged();
+                App.BackupState?.MarkChanged();
             }
         }
     }

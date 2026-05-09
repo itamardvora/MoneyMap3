@@ -3,6 +3,8 @@ using Android.App;
 using Android.OS;
 using Android.Widget;
 using Xamarin.Essentials;
+using MoneyMap.Models;
+using MoneyMap.Services;
 
 namespace MoneyMap.Activities
 {
@@ -28,6 +30,8 @@ namespace MoneyMap.Activities
             if (!App.IsCoreReady())
                 await App.InitForAuthAsync();
 
+            FireBaseHelper.InitializeFirebase(this);
+
             _fullNameInput = FindViewById<EditText>(Resource.Id.fullNameInput);
             _emailInput = FindViewById<EditText>(Resource.Id.emailInput);
             _passwordInput = FindViewById<EditText>(Resource.Id.passwordInput);
@@ -43,6 +47,7 @@ namespace MoneyMap.Activities
                 {
                     _birthDateInput.Text = ev.Date.ToString("yyyy-MM-dd");
                 }, t.Year, t.Month - 1, t.Day);
+
                 dp.Show();
             };
 
@@ -63,24 +68,36 @@ namespace MoneyMap.Activities
                     return;
                 }
 
-                var (ok, err, user) = await App.UserService.TryRegisterWithFirebaseAsync(fullName, email, password, birthDate);
-                if (!ok)
+                var user = new User
                 {
-                    Toast.MakeText(this, err, ToastLength.Long).Show();
-                    return;
-                }
+                    FullName = fullName,
+                    Email = email,
+                    Password = password,
+                    BirthDate = birthDate,
+                    CreatedAt = DateTime.Now,
+                    Role = "User"
+                };
 
+                await FireBaseHelper.RegisterUserAsync(user);
                 Toast.MakeText(this, "נרשמת בהצלחה! אפשר להתחבר.", ToastLength.Short).Show();
                 StartActivity(typeof(LoginActivity));
                 Finish();
             }
+            //catch (Exception ex)
+            //{
+            //    Toast.MakeText(this, "שגיאה: " + ex.Message, ToastLength.Long).Show();
+            //}
             catch (Exception ex)
             {
-                Toast.MakeText(this, "שגיאה: " + ex.Message, ToastLength.Long).Show();
+                Android.Util.Log.Error("REGISTER_ERROR", ex.ToString());
+                Toast.MakeText(this, "שגיאה: " + ex.GetType().Name + " - " + ex.Message, ToastLength.Long).Show();
             }
         }
 
-        public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Android.Content.PM.Permission[] grantResults)
+        public override void OnRequestPermissionsResult(
+            int requestCode,
+            string[] permissions,
+            Android.Content.PM.Permission[] grantResults)
         {
             Platform.OnRequestPermissionsResult(requestCode, permissions, grantResults);
             base.OnRequestPermissionsResult(requestCode, permissions, grantResults);

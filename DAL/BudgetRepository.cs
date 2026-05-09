@@ -19,13 +19,13 @@ namespace MoneyMap.DAL
         public async Task Add(Budget budget)
         {
             await _db.InsertAsync(budget);
-            App.BackupState?.MarkBudgetsChanged();
+            App.BackupState?.MarkChanged();
         }
 
         public async Task Update(Budget budget)
         {
             await _db.UpdateAsync(budget);
-            App.BackupState?.MarkBudgetsChanged();
+            App.BackupState?.MarkChanged();
         }
 
         public async Task<Budget> GetUserBudget(int userId, int categoryId, DateTime month)
@@ -35,6 +35,7 @@ namespace MoneyMap.DAL
                 .ToListAsync();
 
             var targetMonth = new DateTime(month.Year, month.Month, 1);
+
             return allBudgets.FirstOrDefault(b =>
                 b.BudgetMonth.Year == targetMonth.Year &&
                 b.BudgetMonth.Month == targetMonth.Month);
@@ -49,9 +50,11 @@ namespace MoneyMap.DAL
             if (month.HasValue)
             {
                 var targetMonth = new DateTime(month.Value.Year, month.Value.Month, 1);
+
                 allBudgets = allBudgets
-                    .Where(b => b.BudgetMonth.Year == targetMonth.Year &&
-                                b.BudgetMonth.Month == targetMonth.Month)
+                    .Where(b =>
+                        b.BudgetMonth.Year == targetMonth.Year &&
+                        b.BudgetMonth.Month == targetMonth.Month)
                     .ToList();
             }
 
@@ -61,14 +64,16 @@ namespace MoneyMap.DAL
         public async Task UpdateMonthlyLimit(int budgetId, decimal newMonthlyLimit)
         {
             var budget = await _db.Table<Budget>()
-                                  .Where(b => b.BudgetID == budgetId)
-                                  .FirstOrDefaultAsync();
+                .Where(b => b.BudgetID == budgetId)
+                .FirstOrDefaultAsync();
 
-            if (budget == null) return;
+            if (budget == null)
+                return;
 
             budget.MonthlyLimit = newMonthlyLimit;
+
             await _db.UpdateAsync(budget);
-            App.BackupState?.MarkBudgetsChanged();
+            App.BackupState?.MarkChanged();
         }
     }
 }
