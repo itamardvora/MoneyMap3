@@ -3172,91 +3172,88 @@ namespace MoneyMap
 			public const int nav_selected = 2131034243;
 			
 			// aapt resource value: 0x7F050084
-			public const int nav_text_selector = 2131034244;
+			public const int nav_unselected = 2131034244;
 			
 			// aapt resource value: 0x7F050085
-			public const int nav_unselected = 2131034245;
+			public const int notification_action_color_filter = 2131034245;
 			
 			// aapt resource value: 0x7F050086
-			public const int notification_action_color_filter = 2131034246;
+			public const int notification_icon_bg_color = 2131034246;
 			
 			// aapt resource value: 0x7F050087
-			public const int notification_icon_bg_color = 2131034247;
+			public const int onSurface = 2131034247;
 			
 			// aapt resource value: 0x7F050088
-			public const int onSurface = 2131034248;
+			public const int primary_dark_material_dark = 2131034248;
 			
 			// aapt resource value: 0x7F050089
-			public const int primary_dark_material_dark = 2131034249;
+			public const int primary_dark_material_light = 2131034249;
 			
 			// aapt resource value: 0x7F05008A
-			public const int primary_dark_material_light = 2131034250;
+			public const int primary_material_dark = 2131034250;
 			
 			// aapt resource value: 0x7F05008B
-			public const int primary_material_dark = 2131034251;
+			public const int primary_material_light = 2131034251;
 			
 			// aapt resource value: 0x7F05008C
-			public const int primary_material_light = 2131034252;
+			public const int primary_text_default_material_dark = 2131034252;
 			
 			// aapt resource value: 0x7F05008D
-			public const int primary_text_default_material_dark = 2131034253;
+			public const int primary_text_default_material_light = 2131034253;
 			
 			// aapt resource value: 0x7F05008E
-			public const int primary_text_default_material_light = 2131034254;
+			public const int primary_text_disabled_material_dark = 2131034254;
 			
 			// aapt resource value: 0x7F05008F
-			public const int primary_text_disabled_material_dark = 2131034255;
+			public const int primary_text_disabled_material_light = 2131034255;
 			
 			// aapt resource value: 0x7F050090
-			public const int primary_text_disabled_material_light = 2131034256;
+			public const int ripple_material_dark = 2131034256;
 			
 			// aapt resource value: 0x7F050091
-			public const int ripple_material_dark = 2131034257;
+			public const int ripple_material_light = 2131034257;
 			
 			// aapt resource value: 0x7F050092
-			public const int ripple_material_light = 2131034258;
+			public const int secondary_text_default_material_dark = 2131034258;
 			
 			// aapt resource value: 0x7F050093
-			public const int secondary_text_default_material_dark = 2131034259;
+			public const int secondary_text_default_material_light = 2131034259;
 			
 			// aapt resource value: 0x7F050094
-			public const int secondary_text_default_material_light = 2131034260;
+			public const int secondary_text_disabled_material_dark = 2131034260;
 			
 			// aapt resource value: 0x7F050095
-			public const int secondary_text_disabled_material_dark = 2131034261;
+			public const int secondary_text_disabled_material_light = 2131034261;
 			
 			// aapt resource value: 0x7F050096
-			public const int secondary_text_disabled_material_light = 2131034262;
+			public const int surface = 2131034262;
 			
 			// aapt resource value: 0x7F050097
-			public const int surface = 2131034263;
+			public const int surfaceVariant = 2131034263;
 			
 			// aapt resource value: 0x7F050098
-			public const int surfaceVariant = 2131034264;
+			public const int switch_thumb_disabled_material_dark = 2131034264;
 			
 			// aapt resource value: 0x7F050099
-			public const int switch_thumb_disabled_material_dark = 2131034265;
+			public const int switch_thumb_disabled_material_light = 2131034265;
 			
 			// aapt resource value: 0x7F05009A
-			public const int switch_thumb_disabled_material_light = 2131034266;
+			public const int switch_thumb_material_dark = 2131034266;
 			
 			// aapt resource value: 0x7F05009B
-			public const int switch_thumb_material_dark = 2131034267;
+			public const int switch_thumb_material_light = 2131034267;
 			
 			// aapt resource value: 0x7F05009C
-			public const int switch_thumb_material_light = 2131034268;
+			public const int switch_thumb_normal_material_dark = 2131034268;
 			
 			// aapt resource value: 0x7F05009D
-			public const int switch_thumb_normal_material_dark = 2131034269;
+			public const int switch_thumb_normal_material_light = 2131034269;
 			
 			// aapt resource value: 0x7F05009E
-			public const int switch_thumb_normal_material_light = 2131034270;
+			public const int tooltip_background_dark = 2131034270;
 			
 			// aapt resource value: 0x7F05009F
-			public const int tooltip_background_dark = 2131034271;
-			
-			// aapt resource value: 0x7F0500A0
-			public const int tooltip_background_light = 2131034272;
+			public const int tooltip_background_light = 2131034271;
 			
 			static Color()
 			{

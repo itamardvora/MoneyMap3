@@ -22,12 +22,9 @@ namespace MoneyMap.Activities
         private TextView _portfolioValue, _portfolioPnL;
         private TextView _budgetTableEmptyText;
         private LinearLayout _budgetRowsContainer;
-        private Spinner _currencySpinner;
         private Button _addExpenseButton;
         private Button _profileButton;
 
-        private readonly string[] _currencyOptions = new[] { "ILS", "USD", "EUR" };
-        private bool _suppressSpinnerEvent = false;
 
         protected override void OnStop()
         {
@@ -51,7 +48,6 @@ namespace MoneyMap.Activities
             _budgetTableEmptyText = FindViewById<TextView>(Resource.Id.homeBudgetTableEmptyText);
             _budgetRowsContainer = FindViewById<LinearLayout>(Resource.Id.homeBudgetRowsContainer);
 
-            //_currencySpinner = FindViewById<Spinner>(Resource.Id.currencySpinner);
             _addExpenseButton = FindViewById<Button>(Resource.Id.homeAddExpenseButton);
             _profileButton = FindViewById<Button>(Resource.Id.profileButton);
 
@@ -63,7 +59,6 @@ namespace MoneyMap.Activities
             if (_profileButton != null)
                 _profileButton.Click += (s, e) => StartActivity(typeof(ProfileActivity));
 
-            SetupCurrencySpinner();
         }
 
         protected override async void OnResume()
@@ -80,7 +75,6 @@ namespace MoneyMap.Activities
                 if (!App.IsFullyReady())
                     await App.InitAfterLoginAsync();
 
-                await SyncSpinnerSelectionFromSettingsAsync();
                 await LoadAll();
             }
             catch (Exception ex)
@@ -122,77 +116,8 @@ namespace MoneyMap.Activities
             };
         }
 
-        private void SetupCurrencySpinner()
-        {
-            if (_currencySpinner == null)
-                return;
+       
 
-            var adapter = new ArrayAdapter<string>(
-                this,
-                Android.Resource.Layout.SimpleSpinnerItem,
-                _currencyOptions
-            );
-
-            adapter.SetDropDownViewResource(Android.Resource.Layout.SimpleSpinnerDropDownItem);
-            _currencySpinner.Adapter = adapter;
-
-            _suppressSpinnerEvent = true;
-
-            var code = Preferences.Get("preferred_currency_code", "");
-            if (string.IsNullOrWhiteSpace(code))
-                code = Preferences.Get("PreferredCurrencyCode", "ILS");
-
-            code = (code ?? "ILS").Trim().ToUpperInvariant();
-
-            var idx = Array.IndexOf(_currencyOptions, code);
-
-            if (idx < 0)
-                idx = 0;
-
-            _currencySpinner.SetSelection(idx);
-            _suppressSpinnerEvent = false;
-
-            _currencySpinner.ItemSelected += async (s, e) =>
-            {
-                if (_suppressSpinnerEvent)
-                    return;
-
-                var selectedCode = _currencyOptions[e.Position];
-
-                try
-                {
-                    if (App.CurrencyService != null)
-                        await App.CurrencyService.SetPreferredCurrencyAsync(selectedCode);
-
-                    Preferences.Set("preferred_currency_code", selectedCode);
-                    Preferences.Set("PreferredCurrencyCode", selectedCode);
-
-                    Toast.MakeText(this, "מטבע תצוגה: " + selectedCode, ToastLength.Short).Show();
-
-                    await LoadAll();
-                }
-                catch (Exception ex)
-                {
-                    Toast.MakeText(this, "שגיאה בהחלפת מטבע: " + ex.Message, ToastLength.Long).Show();
-                }
-            };
-        }
-
-        private async Task SyncSpinnerSelectionFromSettingsAsync()
-        {
-            if (_currencySpinner == null)
-                return;
-
-            var code = await SafePreferredCodeAsync();
-            var idx = Array.IndexOf(_currencyOptions, code);
-
-            if (idx < 0)
-                idx = 0;
-
-            _suppressSpinnerEvent = true;
-            _currencySpinner.SetSelection(idx);
-            _suppressSpinnerEvent = false;
-        }
 
         private async Task LoadAll()
         {
@@ -203,42 +128,15 @@ namespace MoneyMap.Activities
             await LoadInvestmentSummary();
         }
 
-        //private async Task<string> SafePreferredCodeAsync()
-        //{
-        //    var code = Preferences.Get("PreferredCurrencyCode", "ILS");
 
-        //    try
-        //    {
-        //        if (App.CurrencyService != null)
-        //        {
-        //            var srv = await App.CurrencyService.GetPreferredCurrencyCodeAsync();
 
-        //            if (!string.IsNullOrWhiteSpace(srv) && srv != code)
-        //            {
-        //                code = srv;
-        //                Preferences.Set("PreferredCurrencyCode", code);
-        //            }
-        //        }
-        //    }
-        //    catch
-        //    {
-        //    }
-
-        //    return code;
-        //}
-        private Task<string> SafePreferredCodeAsync()
-        {
-            return Task.FromResult("ILS");
-        }
 
         private async Task<string> SafeFormatAsync(decimal amountIls, int decimals = 2)
         {
-            var code = await SafePreferredCodeAsync();
-
             try
             {
                 if (App.CurrencyService != null)
-                    return await App.CurrencyService.FormatAsync(amountIls, "ILS", code, decimals);
+                    return await App.CurrencyService.FormatAsync(amountIls, "ILS", "ILS", decimals);
             }
             catch
             {
@@ -652,22 +550,6 @@ namespace MoneyMap.Activities
                         }
 
                         decimal amountIls = amountInDisplayCurrency;
-                        var preferred = await SafePreferredCodeAsync();
-
-                        if (!string.Equals(preferred, "ILS", StringComparison.OrdinalIgnoreCase))
-                        {
-                            if (App.CurrencyService == null)
-                            {
-                                Toast.MakeText(this, "אי אפשר להוסיף הוצאה במטבע זר כי שירות המטבעות לא זמין", ToastLength.Long).Show();
-                                return;
-                            }
-
-                            amountIls = await App.CurrencyService.ConvertAsync(
-                                amountInDisplayCurrency,
-                                preferred,
-                                "ILS"
-                            );
-                        }
 
                         await App.ExpenseService.AddExpense(
                             userId,
