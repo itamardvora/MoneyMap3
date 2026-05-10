@@ -11,22 +11,17 @@ namespace MoneyMap.Services
 {
     public class CurrencyService
     {
-        private readonly UserSettingsRepository _userSettings;
         private readonly CurrencyRateRepository _ratesRepo;
         private readonly IExchangeRatesClient _client;
         private readonly TimeSpan _ttl;
 
-        private const string PrefKeyPreferredCurrency = "preferred_currency_code";
-        private const string OldPrefKeyPreferredCurrency = "PreferredCurrencyCode";
-        private const string DefaultCurrency = "ILS";
+      
 
         public CurrencyService(
-            UserSettingsRepository userSettings,
-            CurrencyRateRepository ratesRepo,
-            IExchangeRatesClient client = null,
-            TimeSpan? ttl = null)
+      CurrencyRateRepository ratesRepo,
+      IExchangeRatesClient client = null,
+      TimeSpan? ttl = null)
         {
-            _userSettings = userSettings;
             _ratesRepo = ratesRepo;
             _client = client;
             _ttl = ttl ?? TimeSpan.FromHours(24);
@@ -113,11 +108,7 @@ namespace MoneyMap.Services
             return amountInIls / toToIls;
         }
 
-        public async Task<string> FormatAmountForDisplayAsync(decimal amount, string amountCurrencyCode, int decimals = 2)
-        {
-            var preferred = await GetPreferredCurrencyCodeAsync();
-            return await FormatAsync(amount, amountCurrencyCode, preferred, decimals);
-        }
+     
 
         public async Task<string> FormatAsync(decimal amount, string fromCode, string toCode, int decimals = 2)
         {
@@ -160,26 +151,6 @@ namespace MoneyMap.Services
             {
                 return null;
             }
-        }
-
-        public Task<string> GetPreferredCurrencyCodeAsync()
-        {
-            // כרגע אין בחירת מטבע ראשי באפליקציה, לכן ברירת המחדל לתצוגה היא שקל.
-            // אם בעתיד תחזיר בחירת מטבע ראשי, אפשר להשתמש שוב ב-Preferences.
-            return Task.FromResult("ILS");
-        }
-
-        public Task SetPreferredCurrencyAsync(string code)
-        {
-            var normalized = Norm(code);
-
-            if (normalized != "ILS" && normalized != "USD" && normalized != "EUR")
-                normalized = "ILS";
-
-            Preferences.Set(PrefKeyPreferredCurrency, normalized);
-            Preferences.Set(OldPrefKeyPreferredCurrency, normalized);
-
-            return Task.CompletedTask;
         }
 
         private async Task<decimal> GetRateToIlsPreferDbAsync(string code)

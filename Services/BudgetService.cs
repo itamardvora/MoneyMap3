@@ -99,12 +99,6 @@ namespace MoneyMap.Services
             return remaining;
         }
 
-        public Task UpdateUserBudget(int budgetId, decimal newLimit)
-        {
-            if (newLimit <= 0)
-                throw new ArgumentException("Monthly limit must be positive");
-
-            return _budgetRepo.UpdateMonthlyLimit(budgetId, newLimit);
-        }
+        
     }
 }

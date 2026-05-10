@@ -19,7 +19,6 @@ namespace MoneyMap
         public static ExpenseRepository Expenses { get; private set; }
         public static CategoryRepository Category { get; private set; }
         public static StockPriceCacheRepository StockPrices { get; private set; }
-        public static UserSettingsRepository UserSettingsRepo { get; private set; }
         public static CurrencyRateRepository CurrencyRateRepo { get; private set; }
         public static IncomeRepository Incomes { get; private set; }
 
@@ -92,7 +91,6 @@ namespace MoneyMap
             Expenses = new ExpenseRepository(Db);
             Category = new CategoryRepository(Db);
             StockPrices = new StockPriceCacheRepository(Db);
-            UserSettingsRepo = new UserSettingsRepository(Db);
             CurrencyRateRepo = new CurrencyRateRepository(Db);
             Incomes = new IncomeRepository(Db);
 
@@ -108,7 +106,6 @@ namespace MoneyMap
                 IExchangeRatesClient boiClient = new ExchangeRatesClient();
 
                 CurrencyService = new CurrencyService(
-                    UserSettingsRepo,
                     CurrencyRateRepo,
                     boiClient,
                     TimeSpan.FromDays(1)

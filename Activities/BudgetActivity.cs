@@ -229,18 +229,16 @@ namespace MoneyMap.Activities
                 ? (int)Math.Min(100, (double)(totalSpent / totalBudget * 100m))
                 : 0;
 
-            var preferred = await SafePreferredCodeAsync();
-
             var rows = summaries
-                .OrderBy(x => x.CategoryName)
-                .Select(async s => new FormattedBudgetRow
-                {
-                    CategoryID = s.CategoryID,
-                    CategoryName = s.CategoryName,
-                    PlannedText = await SafeFormatFromIlsAsync(s.MonthlyLimit, preferred, 0),
-                    SpentText = await SafeFormatFromIlsAsync(s.Spent, preferred, 0),
-                    RemainingText = await SafeFormatFromIlsAsync(s.Remaining, preferred, 0),
-                    Progress = s.MonthlyLimit > 0
+      .OrderBy(x => x.CategoryName)
+      .Select(async s => new FormattedBudgetRow
+      {
+          CategoryID = s.CategoryID,
+          CategoryName = s.CategoryName,
+          PlannedText = await SafeFormatAsync(s.MonthlyLimit, 0),
+          SpentText = await SafeFormatAsync(s.Spent, 0),
+          RemainingText = await SafeFormatAsync(s.Remaining, 0),
+          Progress = s.MonthlyLimit > 0
                         ? (int)Math.Round((double)(s.Spent / s.MonthlyLimit * 100m))
                         : 0
                 })
@@ -327,20 +325,12 @@ namespace MoneyMap.Activities
             spinner.Adapter = adapter;
         }
 
-        private async Task<decimal> ConvertToIlsAsync(decimal amountInDisplayCurrency)
+        private Task<decimal> ConvertToIlsAsync(decimal amountInIls)
         {
-            var preferred = await SafePreferredCodeAsync();
-
-            if (string.Equals(preferred, "ILS", StringComparison.OrdinalIgnoreCase))
-                return amountInDisplayCurrency;
-
-            if (App.CurrencyService == null)
-                throw new Exception("שירות המרת מטבע לא זמין כרגע");
-
-            return await App.CurrencyService.ConvertAsync(amountInDisplayCurrency, preferred, "ILS");
+            return Task.FromResult(amountInIls);
         }
 
-      private bool TryParsePositiveDecimal(string text, out decimal value)
+        private bool TryParsePositiveDecimal(string text, out decimal value)
         {
             text = (text ?? "").Trim().Replace(",", ".");
 
@@ -665,30 +655,14 @@ namespace MoneyMap.Activities
             };
         }
 
-        private async Task<string> SafePreferredCodeAsync()
-        {
-            try
-            {
-                if (App.CurrencyService != null)
-                {
-                    var code = await App.CurrencyService.GetPreferredCurrencyCodeAsync();
-                    if (!string.IsNullOrWhiteSpace(code)) return code;
-                }
-            }
-            catch
-            {
-            }
 
-            return "ILS";
-        }
 
         private async Task<string> SafeFormatAsync(decimal amountIls, int decimals = 2)
         {
             try
             {
-                var code = await SafePreferredCodeAsync();
                 if (App.CurrencyService != null)
-                    return await App.CurrencyService.FormatAsync(amountIls, "ILS", code, decimals);
+                    return await App.CurrencyService.FormatAsync(amountIls, "ILS", "ILS", decimals);
             }
             catch
             {
@@ -697,19 +671,6 @@ namespace MoneyMap.Activities
             return amountIls.ToString("N" + decimals) + " ₪";
         }
 
-        private async Task<string> SafeFormatFromIlsAsync(decimal amountIls, string target, int decimals = 2)
-        {
-            try
-            {
-                if (App.CurrencyService != null && !string.IsNullOrWhiteSpace(target))
-                    return await App.CurrencyService.FormatAsync(amountIls, "ILS", target, decimals);
-            }
-            catch
-            {
-            }
-
-            return amountIls.ToString("N" + decimals) + " ₪";
-        }
 
         public void OnViewExpenses(int categoryId, string categoryName)
         {

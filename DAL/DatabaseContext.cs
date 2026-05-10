@@ -40,7 +40,6 @@ namespace MoneyMap.DAL
                 await _database.CreateTableAsync<Expense>();
                 await _database.CreateTableAsync<Category>();
                 await _database.CreateTableAsync<StockPrices>();
-                await _database.CreateTableAsync<UserSettings>();
                 await _database.CreateTableAsync<CurrencyRate>();
 
                 // חדש: טבלת הכנסות
