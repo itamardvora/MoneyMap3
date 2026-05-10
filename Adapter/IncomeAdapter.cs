@@ -3,17 +3,23 @@ using System.Collections.Generic;
 using Android.Views;
 using Android.Widget;
 using AndroidX.RecyclerView.Widget;
-using MoneyMap.Models;
 
 namespace MoneyMap.Adapters
 {
+    public class IncomeDisplayRow
+    {
+        public string SourceText { get; set; }
+        public string DateText { get; set; }
+        public string AmountText { get; set; }
+    }
+
     public class IncomeAdapter : RecyclerView.Adapter
     {
-        private List<Income> _items;
+        private List<IncomeDisplayRow> _items;
 
-        public IncomeAdapter(List<Income> items)
+        public IncomeAdapter(List<IncomeDisplayRow> items)
         {
-            _items = items ?? new List<Income>();
+            _items = items ?? new List<IncomeDisplayRow>();
         }
 
         public override int ItemCount => _items?.Count ?? 0;
@@ -35,9 +41,9 @@ namespace MoneyMap.Adapters
             ((IncomeViewHolder)holder).Bind(item);
         }
 
-        public void Update(List<Income> items)
+        public void Update(List<IncomeDisplayRow> items)
         {
-            _items = items ?? new List<Income>();
+            _items = items ?? new List<IncomeDisplayRow>();
             NotifyDataSetChanged();
         }
 
@@ -54,10 +60,10 @@ namespace MoneyMap.Adapters
                 _amountText = itemView.FindViewById<TextView>(Resource.Id.incomeAmountText);
 
                 if (_sourceText == null || _dateText == null || _amountText == null)
-                    throw new Exception("item_income_row.axml לא תואם ל-IDs שה-IncomeAdapter מחפש");
+                    throw new Exception("item_income_row.xml לא תואם ל-IDs שה-IncomeAdapter מחפש");
             }
 
-            public void Bind(Income income)
+            public void Bind(IncomeDisplayRow income)
             {
                 if (income == null)
                 {
@@ -67,9 +73,17 @@ namespace MoneyMap.Adapters
                     return;
                 }
 
-                _sourceText.Text = string.IsNullOrWhiteSpace(income.Source) ? "ללא מקור" : income.Source;
-                _dateText.Text = income.Date.ToString("dd/MM/yyyy");
-                _amountText.Text = $"{income.Amount:N0} ₪";
+                _sourceText.Text = string.IsNullOrWhiteSpace(income.SourceText)
+                    ? "ללא מקור"
+                    : income.SourceText;
+
+                _dateText.Text = string.IsNullOrWhiteSpace(income.DateText)
+                    ? "-"
+                    : income.DateText;
+
+                _amountText.Text = string.IsNullOrWhiteSpace(income.AmountText)
+                    ? "0 ₪"
+                    : income.AmountText;
             }
         }
     }

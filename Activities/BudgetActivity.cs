@@ -70,7 +70,7 @@ namespace MoneyMap.Activities
             _categoryRecyclerView.SetAdapter(_adapter);
 
             _incomeRecyclerView.SetLayoutManager(new LinearLayoutManager(this));
-            _incomeAdapter = new IncomeAdapter(new List<Income>());
+            _incomeAdapter = new IncomeAdapter(new List<IncomeDisplayRow>());
             _incomeRecyclerView.SetAdapter(_incomeAdapter);
 
             await LoadBudgetSummary();
@@ -247,11 +247,25 @@ namespace MoneyMap.Activities
                 .ToList();
 
             var finalRows = new List<FormattedBudgetRow>();
+
             foreach (var task in rows)
                 finalRows.Add(await task);
 
             _adapter.UpdateData(finalRows);
-            _incomeAdapter.Update(incomes.OrderByDescending(i => i.Date).ToList());
+
+            var incomeRows = new List<IncomeDisplayRow>();
+
+            foreach (var income in incomes.OrderByDescending(i => i.Date))
+            {
+                incomeRows.Add(new IncomeDisplayRow
+                {
+                    SourceText = income.Source,
+                    DateText = income.Date.ToString("dd/MM/yyyy"),
+                    AmountText = await SafeFormatAsync(income.Amount, 0)
+                });
+            }
+
+            _incomeAdapter.Update(incomeRows);
         }
 
         private string GetHebrewMonthTitle(DateTime date)
@@ -317,28 +331,25 @@ namespace MoneyMap.Activities
         {
             var preferred = await SafePreferredCodeAsync();
 
-            if (string.Equals(preferred, "ILS", StringComparison.OrdinalIgnoreCase) ||
-                App.CurrencyService == null)
-            {
+            if (string.Equals(preferred, "ILS", StringComparison.OrdinalIgnoreCase))
                 return amountInDisplayCurrency;
-            }
 
-            try
-            {
-                var rate = await App.CurrencyService.GetRateAsync(preferred, "ILS");
-                if (rate.HasValue && rate.Value > 0m)
-                    return amountInDisplayCurrency * rate.Value;
-            }
-            catch
-            {
-            }
+            if (App.CurrencyService == null)
+                throw new Exception("שירות המרת מטבע לא זמין כרגע");
 
-            return amountInDisplayCurrency;
+            return await App.CurrencyService.ConvertAsync(amountInDisplayCurrency, preferred, "ILS");
         }
 
-        private bool TryParsePositiveDecimal(string text, out decimal value)
+      private bool TryParsePositiveDecimal(string text, out decimal value)
         {
-            return decimal.TryParse(text, out value) && value > 0m;
+            text = (text ?? "").Trim().Replace(",", ".");
+
+            return decimal.TryParse(
+                text,
+                System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out value
+            ) && value > 0m;
         }
 
         private async void ShowAddIncomeDialog()

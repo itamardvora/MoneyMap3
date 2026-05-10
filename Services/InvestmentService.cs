@@ -9,10 +9,9 @@ namespace MoneyMap.Services
     public class InvestmentService
     {
         private readonly InvestmentRepository _repo;
-        private readonly StockPriceService _stockPriceService; // יכול להיות null
-        private readonly CurrencyService _currencyService;     // יכול להיות null
+        private readonly StockPriceService _stockPriceService;
+        private readonly CurrencyService _currencyService;
 
-        // בנאי קצר – תאימות לאזורים שקוראים רק עם repo
         public InvestmentService(InvestmentRepository repo)
         {
             _repo = repo ?? throw new ArgumentNullException(nameof(repo));
@@ -20,7 +19,6 @@ namespace MoneyMap.Services
             _currencyService = null;
         }
 
-        // בנאי ביניים – אם יש לך שירות מחירים אבל אין CurrencyService
         public InvestmentService(InvestmentRepository repo, StockPriceService stockPriceService)
         {
             _repo = repo ?? throw new ArgumentNullException(nameof(repo));
@@ -28,15 +26,20 @@ namespace MoneyMap.Services
             _currencyService = null;
         }
 
-        // בנאי מלא – אם יש גם CurrencyService
-        public InvestmentService(InvestmentRepository repo, StockPriceService stockPriceService, CurrencyService currencyService)
+        public InvestmentService(
+            InvestmentRepository repo,
+            StockPriceService stockPriceService,
+            CurrencyService currencyService)
         {
             _repo = repo ?? throw new ArgumentNullException(nameof(repo));
             _stockPriceService = stockPriceService;
             _currencyService = currencyService;
         }
 
-        private static string Norm(string s) => (s ?? string.Empty).Trim().ToUpperInvariant();
+        private static string Norm(string s)
+        {
+            return (s ?? string.Empty).Trim().ToUpperInvariant();
+        }
 
         public async Task AddInvestment(
             int userId,
@@ -48,21 +51,53 @@ namespace MoneyMap.Services
         {
             symbol = Norm(symbol);
             originalCurrency = Norm(originalCurrency);
-            if (userId <= 0) throw new ArgumentException("userId invalid");
-            if (string.IsNullOrWhiteSpace(symbol)) throw new ArgumentException("symbol required");
-            if (quantity <= 0) throw new ArgumentException("quantity must be positive");
-            if (buyPrice <= 0) throw new ArgumentException("buyPrice must be positive");
-            if (buyDate > DateTime.UtcNow.AddMinutes(1)) throw new ArgumentException("buyDate cannot be in the future");
-            if (originalCurrency != "ILS" && originalCurrency != "USD" && originalCurrency != "EUR")
-                throw new ArgumentException("originalCurrency must be ILS/USD/EUR");
 
-            // כאן לא משנים סכמת DB – רק ממלאים את השדות שכבר קיימים במודל
+            if (userId <= 0)
+                throw new ArgumentException("משתמש לא תקין");
+
+            if (string.IsNullOrWhiteSpace(symbol))
+                throw new ArgumentException("סימבול חובה");
+
+            if (quantity <= 0)
+                throw new ArgumentException("כמות חייבת להיות גדולה מ-0");
+
+            if (buyPrice <= 0)
+                throw new ArgumentException("מחיר קנייה חייב להיות גדול מ-0");
+
+            if (buyDate.Date > DateTime.Today)
+                throw new ArgumentException("אי אפשר לבחור תאריך עתידי");
+
+            if (originalCurrency != "ILS" && originalCurrency != "USD" && originalCurrency != "EUR")
+                throw new ArgumentException("מטבע לא תקין");
+
             decimal fxToIlsAtPurchase = 1m;
-            // אם תוסיף בעתיד CurrencyService – נחשב המרה. אחרת נשאיר 1.
-            if (originalCurrency != "ILS" && _currencyService != null)
+
+            /*
+             * חשוב:
+             * השמירה לא תלויה במחיר מניה נוכחי.
+             * כלומר לא קוראים כאן ל-StockPriceService.
+             * הסיבה: אם ה-API איטי / לא עובד / עבר מגבלה,
+             * עדיין צריך שההשקעה תישמר ותופיע במסך.
+             */
+
+            if (originalCurrency != "ILS")
             {
-                var rate = await _currencyService.GetRateAsync(originalCurrency, "ILS");
-                fxToIlsAtPurchase = rate ?? 1m;
+                if (_currencyService != null)
+                {
+                    try
+                    {
+                        var rate = await _currencyService.GetRateAsync(originalCurrency, "ILS");
+
+                        if (rate.HasValue && rate.Value > 0m)
+                            fxToIlsAtPurchase = rate.Value;
+                    }
+                    catch
+                    {
+                        // לא מפילים שמירה בגלל שער מטבע.
+                        // אם אין שער, נשמור עם 1 כדי שההשקעה לא תיעלם.
+                        fxToIlsAtPurchase = 1m;
+                    }
+                }
             }
 
             var inv = new Investment
@@ -81,37 +116,88 @@ namespace MoneyMap.Services
             await _repo.AddInvestment(inv);
         }
 
-        // עטיפה לחתימה היסטורית
         public Task AddInvestment(int userId, string symbol, DateTime buyDate, int buyPrice, decimal quantity)
-            => AddInvestment(userId, symbol, quantity, buyPrice, buyDate, "ILS");
+        {
+            return AddInvestment(userId, symbol, quantity, buyPrice, buyDate, "ILS");
+        }
 
         public Task DeleteInvestment(int userId, int investmentId)
-            => _repo.DeleteInvestment(investmentId, userId);
+        {
+            return _repo.DeleteInvestment(investmentId, userId);
+        }
 
         public Task<Investment> GetInvestmentById(int userId, int investmentId)
-            => _repo.GetById(investmentId, userId);
+        {
+            return _repo.GetById(investmentId, userId);
+        }
 
         public Task<List<Investment>> GetInvestmentsForUserAsync(int userId)
-            => _repo.GetAllByUser(userId);
+        {
+            return _repo.GetAllByUser(userId);
+        }
 
-        // פונקציות תשואה/רווח – ישתמשו בעתיד אם תרצה
         public async Task<decimal> CalculateProfitAsync(Investment inv)
-        {              
-            if (inv == null) return 0m;
-            if (_stockPriceService == null) return 0m;
+        {
+            if (inv == null)
+                return 0m;
 
-            var currentPriceIls = await _stockPriceService.GetPriceOrFetch(Norm(inv.StockSymbol));
-            var currentValueIls = currentPriceIls * inv.Quantity;
+            if (_stockPriceService == null)
+                return 0m;
 
-            var costIls = inv.TotalInIls > 0 ? inv.TotalInIls : inv.BuyPrice * inv.Quantity;
+            decimal currentPriceUsd;
+
+            try
+            {
+                currentPriceUsd = await _stockPriceService.GetPriceOrFetch(Norm(inv.StockSymbol));
+            }
+            catch
+            {
+                return 0m;
+            }
+
+            var currentValueUsd = currentPriceUsd * inv.Quantity;
+
+            decimal currentValueIls = currentValueUsd;
+
+            if (_currencyService != null)
+            {
+                try
+                {
+                    currentValueIls = await _currencyService.ConvertAsync(currentValueUsd, "USD", "ILS");
+                }
+                catch
+                {
+                    currentValueIls = currentValueUsd;
+                }
+            }
+
+            decimal costIls;
+
+            if (inv.TotalInIls > 0m)
+                costIls = inv.TotalInIls;
+            else
+                costIls = inv.BuyPrice * inv.Quantity * Math.Max(inv.FxRateToIlsAtPurchase, 1m);
+
             return currentValueIls - costIls;
         }
 
         public async Task<decimal> CalculateReturnAsync(Investment inv)
         {
+            if (inv == null)
+                return 0m;
+
             var pnl = await CalculateProfitAsync(inv);
-            var costIls = inv.TotalInIls > 0 ? inv.TotalInIls : inv.BuyPrice * inv.Quantity;
-            if (costIls == 0) return 0m;
+
+            decimal costIls;
+
+            if (inv.TotalInIls > 0m)
+                costIls = inv.TotalInIls;
+            else
+                costIls = inv.BuyPrice * inv.Quantity * Math.Max(inv.FxRateToIlsAtPurchase, 1m);
+
+            if (costIls == 0m)
+                return 0m;
+
             return pnl / costIls;
         }
     }

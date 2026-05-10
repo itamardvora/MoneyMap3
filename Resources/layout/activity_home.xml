@@ -28,12 +28,7 @@
             android:maxLines="1"
             android:ellipsize="end" />
 
-        <Spinner
-            android:id="@+id/currencySpinner"
-            android:layout_width="100dp"
-            android:layout_height="42dp"
-            android:background="#FFFFFF"
-            android:padding="6dp" />
+       
 
         <Button
             android:id="@+id/profileButton"

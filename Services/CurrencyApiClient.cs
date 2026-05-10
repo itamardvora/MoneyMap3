@@ -13,7 +13,10 @@ namespace MoneyMap.Services
 
         public CurrencyApiClient(HttpClient httpClient = null)
         {
-            _http = httpClient ?? new HttpClient();
+            _http = httpClient ?? new HttpClient
+            {
+                Timeout = TimeSpan.FromSeconds(10)
+            };
         }
 
         
@@ -31,13 +34,14 @@ namespace MoneyMap.Services
       
         private async Task<decimal> FetchRateFromBoiAsync(string baseCurrency)
         {
-          
+
             string url =
-                "https://edge.boi.org.il/FusionEdgeServer/sdmx/v2/data/dataflow/BOI.STATISTICS/EXR/1.0" +
-                "?format=sdmx-json" +
-                "&lastNObservations=1" +
-                "&c[DATA_TYPE]=OF00" +        // שער יציג
-                "&c[COUNTER_CURRENCY]=ILS";   // אנחנו תמיד רוצים מול שקל
+      "https://edge.boi.gov.il/FusionEdgeServer/sdmx/v2/data/dataflow/BOI.STATISTICS/EXR/1.0/" +
+      "?format=sdmx-json" +
+      "&lastNObservations=1" +
+      "&c%5BDATA_TYPE%5D=OF00" +
+      "&c%5BBASE_CURRENCY%5D=" + Uri.EscapeDataString(baseCurrency) +
+      "&c%5BCOUNTER_CURRENCY%5D=ILS";
 
 
             var resp = await _http.GetAsync(url);
@@ -55,16 +59,15 @@ namespace MoneyMap.Services
             throw new Exception($"לא הצלחתי לקרוא שער עבור {baseCurrency} מתוך התשובה של בנק ישראל");
         }
 
-      
+
         private decimal? ExtractRateForCurrency(JsonDocument doc, string wantedBaseCurrency)
         {
-           
-
             if (!doc.RootElement.TryGetProperty("data", out var dataElem))
                 return null;
 
             if (!dataElem.TryGetProperty("dataSets", out var dataSetsElem))
                 return null;
+
             if (dataSetsElem.GetArrayLength() == 0)
                 return null;
 
@@ -82,12 +85,12 @@ namespace MoneyMap.Services
             if (!dimsElem.TryGetProperty("series", out var seriesDimsElem))
                 return null;
 
-            
-            var dimValues = new List<List<string>>(); // dimValues[dimIndex][valueIndex] = id (כמו "USD")
+            var dimValues = new List<List<string>>();
 
             for (int dimI = 0; dimI < seriesDimsElem.GetArrayLength(); dimI++)
             {
                 var dimObj = seriesDimsElem[dimI];
+
                 if (!dimObj.TryGetProperty("values", out var valuesArr))
                 {
                     dimValues.Add(new List<string>());
@@ -95,9 +98,11 @@ namespace MoneyMap.Services
                 }
 
                 var thisDimVals = new List<string>();
+
                 for (int vi = 0; vi < valuesArr.GetArrayLength(); vi++)
                 {
                     var valObj = valuesArr[vi];
+
                     if (valObj.TryGetProperty("id", out var idProp))
                         thisDimVals.Add(idProp.GetString());
                     else
@@ -107,20 +112,16 @@ namespace MoneyMap.Services
                 dimValues.Add(thisDimVals);
             }
 
-            // עכשיו נעבור על כל הסדרות בפועל:
             foreach (var seriesProperty in seriesElem.EnumerateObject())
             {
-                string key = seriesProperty.Name; // למשל "7:0:1:0:0:0"
+                string key = seriesProperty.Name;
                 var seriesData = seriesProperty.Value;
 
-                // נפענח את המפתח לרשימת אינדקסים מספריים
                 string[] parts = key.Split(':');
-                if (parts.Length < dimValues.Count)
-                    continue;
 
-                // נמיר למספרים
                 int[] idx = new int[parts.Length];
                 bool parseOk = true;
+
                 for (int i = 0; i < parts.Length; i++)
                 {
                     if (!int.TryParse(parts[i], out idx[i]))
@@ -129,25 +130,25 @@ namespace MoneyMap.Services
                         break;
                     }
                 }
-                if (!parseOk) continue;
+
+                if (!parseOk)
+                    continue;
 
                 string baseCurrencyId = SafeGetDimVal(dimValues, 2, idx, 2);
                 string counterCurrencyId = SafeGetDimVal(dimValues, 3, idx, 3);
                 string dataTypeId = SafeGetDimVal(dimValues, 5, idx, 5);
 
-                
                 if (!string.Equals(baseCurrencyId, wantedBaseCurrency, StringComparison.OrdinalIgnoreCase))
                     continue;
+
                 if (!string.Equals(counterCurrencyId, "ILS", StringComparison.OrdinalIgnoreCase))
                     continue;
+
                 if (!string.Equals(dataTypeId, "OF00", StringComparison.OrdinalIgnoreCase))
                     continue;
 
-               
                 if (!seriesData.TryGetProperty("observations", out var obsElem))
                     continue;
-
-                
 
                 foreach (var obsKvp in obsElem.EnumerateObject())
                 {
@@ -155,17 +156,33 @@ namespace MoneyMap.Services
 
                     if (arr.ValueKind == JsonValueKind.Array && arr.GetArrayLength() > 0)
                     {
-                        var numberAsString = arr[0].GetString();
-                        if (decimal.TryParse(numberAsString, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out decimal rate))
-                        {
+                        if (TryReadDecimal(arr[0], out decimal rate))
                             return rate;
-                        }
                     }
                 }
             }
 
-            // אם לא מצאנו
             return null;
+        }
+
+        private bool TryReadDecimal(JsonElement element, out decimal value)
+        {
+            value = 0m;
+
+            if (element.ValueKind == JsonValueKind.Number)
+                return element.TryGetDecimal(out value);
+
+            if (element.ValueKind == JsonValueKind.String)
+            {
+                return decimal.TryParse(
+                    element.GetString(),
+                    System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    out value
+                );
+            }
+
+            return false;
         }
 
         private string SafeGetDimVal(

@@ -114,14 +114,20 @@ namespace MoneyMap
                     TimeSpan.FromDays(1)
                 );
 
-                try
+                // חשוב:
+                // לא מחכים פה לשערי מטבע.
+                // אחרת התחברות אוטומטית יכולה להיתקע הרבה זמן.
+                _ = Task.Run(async () =>
                 {
-                    await CurrencyService.EnsureBaseRatesAsync();
-                }
-                catch (Exception exRefresh)
-                {
-                    Log.Warn("App.InitAfterLogin", "Currency first refresh failed: " + exRefresh.Message);
-                }
+                    try
+                    {
+                        await CurrencyService.EnsureBaseRatesAsync();
+                    }
+                    catch (Exception exRefresh)
+                    {
+                        Log.Warn("App.InitAfterLogin", "Currency background refresh failed: " + exRefresh.Message);
+                    }
+                });
             }
             catch (Exception exCtor)
             {
@@ -142,9 +148,6 @@ namespace MoneyMap
 
             InvestmentService = new InvestmentService(Investments, StockPriceService, CurrencyService);
             PortfolioService = new PortfolioService(Investments, StockPriceService, CurrencyService);
-
-            // כרגע לא עושים Restore דרך FirebaseBackupService הישן.
-            // בהמשך נעשה Restore חדש דרך Firestore אם תרצה.
 
             _fullInited = true;
         }
