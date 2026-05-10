@@ -101,7 +101,6 @@
     <Compile Include="Models\Budget.cs" />
     <Compile Include="Models\Category.cs" />
     <Compile Include="Models\CurrencyRate.cs" />
-    <Compile Include="Models\DisplayBudgetStatus.cs" />
     <Compile Include="Models\Expense.cs" />
     <Compile Include="Models\Investment.cs" />
     <Compile Include="Models\StockPrices.cs" />

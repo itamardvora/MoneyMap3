@@ -51,7 +51,10 @@ namespace MoneyMap.Activities
             _goToRegisterButton.Click += (s, e) =>
             {
                 if (_isAutoLoginRunning)
+                {
+                    Toast.MakeText(this, "מתבצעת התחברות אוטומטית, נסה שוב בעוד רגע", ToastLength.Short).Show();
                     return;
+                }
 
                 try
                 {
@@ -67,12 +70,14 @@ namespace MoneyMap.Activities
             _loginButton.Click += async (s, e) =>
             {
                 if (_isAutoLoginRunning)
+                {
+                    Toast.MakeText(this, "מתבצעת התחברות אוטומטית, נסה שוב בעוד רגע", ToastLength.Short).Show();
                     return;
+                }
 
                 await LoginAsync();
             };
 
-            // החזרנו התחברות אוטומטית — אבל בגרסה בטוחה יותר.
             _ = TryAutoLoginAsync();
         }
 
@@ -96,6 +101,7 @@ namespace MoneyMap.Activities
 
                 _loginButton.Enabled = false;
                 _goToRegisterButton.Enabled = false;
+                _loginButton.Text = "מתחבר אוטומטית...";
 
                 if (!App.IsCoreReady())
                     await App.InitForAuthAsync();
@@ -131,6 +137,7 @@ namespace MoneyMap.Activities
                 {
                     _loginButton.Enabled = true;
                     _goToRegisterButton.Enabled = true;
+                    _loginButton.Text = "כניסה";
                 }
             }
         }
@@ -162,13 +169,13 @@ namespace MoneyMap.Activities
             {
                 _loginButton.Enabled = false;
                 _goToRegisterButton.Enabled = false;
+                _loginButton.Text = "מתחבר...";
 
                 if (!App.IsCoreReady())
                     await App.InitForAuthAsync();
 
                 FireBaseHelper.InitializeFirebase(this);
 
-                // התחברות אדמין קבוע
                 if (App.UserService.IsAdminCredentials(email, password))
                 {
                     App.UserService.SignInAsAdmin();
@@ -176,7 +183,6 @@ namespace MoneyMap.Activities
                     Preferences.Set("RememberMe", _rememberMeCheckBox.Checked);
                     Preferences.Set("IsLoggedIn", true);
 
-                    // אדמין לא צריך FirebaseUid ולא UserID רגיל
                     Preferences.Set("LoggedInUserId", 0);
                     Preferences.Set("LoggedInUserName", "Admin");
                     Preferences.Set("FirebaseUid", "");
@@ -186,7 +192,6 @@ namespace MoneyMap.Activities
                     return;
                 }
 
-                // התחברות רגילה דרך Firebase
                 var firebaseUid = await FireBaseHelper.SignInUserAsync(email, password);
 
                 var user = await FireBaseHelper.GetUserByIdAsync(firebaseUid);
@@ -215,12 +220,12 @@ namespace MoneyMap.Activities
 
                 AlarmScheduler.ScheduleDaily(this, 6, 0);
 
-                var svc = new Intent(this, typeof(RatesSyncService));
+                var serviceIntent = new Intent(this, typeof(RatesSyncService));
 
                 if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
-                    StartForegroundService(svc);
+                    StartForegroundService(serviceIntent);
                 else
-                    StartService(svc);
+                    StartService(serviceIntent);
 
                 StartActivity(typeof(HomeActivity));
                 Finish();
@@ -231,7 +236,7 @@ namespace MoneyMap.Activities
 
                 Toast.MakeText(
                     this,
-                    "שגיאה: " + ex.GetType().Name + " - " + ex.Message,
+                    "שגיאה בהתחברות: " + ex.GetType().Name + " - " + ex.Message,
                     ToastLength.Long
                 ).Show();
             }
@@ -241,6 +246,7 @@ namespace MoneyMap.Activities
                 {
                     _loginButton.Enabled = true;
                     _goToRegisterButton.Enabled = true;
+                    _loginButton.Text = "כניסה";
                 }
             }
         }

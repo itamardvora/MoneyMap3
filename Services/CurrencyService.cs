@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Threading.Tasks;
 using MoneyMap.DAL;
 using MoneyMap.Models;
 using Xamarin.Essentials;
 
 namespace MoneyMap.Services
-    // אחראי על כל ההמרות מטבעות שקל דולר יורו ואומר האם המטבעות מעודכנים 
 {
     public class CurrencyService
     {
@@ -17,12 +17,14 @@ namespace MoneyMap.Services
         private readonly TimeSpan _ttl;
 
         private const string PrefKeyPreferredCurrency = "preferred_currency_code";
+        private const string OldPrefKeyPreferredCurrency = "PreferredCurrencyCode";
         private const string DefaultCurrency = "ILS";
 
-        public CurrencyService(UserSettingsRepository userSettings,
-                               CurrencyRateRepository ratesRepo,
-                               IExchangeRatesClient client = null,
-                               TimeSpan? ttl = null)
+        public CurrencyService(
+            UserSettingsRepository userSettings,
+            CurrencyRateRepository ratesRepo,
+            IExchangeRatesClient client = null,
+            TimeSpan? ttl = null)
         {
             _userSettings = userSettings;
             _ratesRepo = ratesRepo;
@@ -30,42 +32,62 @@ namespace MoneyMap.Services
             _ttl = ttl ?? TimeSpan.FromHours(24);
         }
 
-       
-        /// טוען/מרענן את המטבעות הבסיסיים שאנחנו צריכים לאפליקציה.
-     
-   
         public async Task EnsureBaseRatesAsync()
         {
-            var wanted = new[] { "USD", "EUR" };
-            await RefreshRatesIfStaleAsync(wanted);
+            await RefreshRatesIfNeededAsync(new[] { "USD", "EUR" });
         }
 
-   
-        /// אם עבר TTL מאז העדכון האחרון – מושך "לייב" ומעדכן ב-DB.
-      
-        public async Task RefreshRatesIfStaleAsync(IEnumerable<string> baseCurrencies)
+        public async Task RefreshRatesIfNeededAsync(IEnumerable<string> baseCurrencies)
         {
-            var last = await _ratesRepo.GetLastUpdatedUtcAsync();
-            if (last.HasValue && (DateTime.UtcNow - last.Value.ToUniversalTime()) < _ttl)
+            if (_client == null)
                 return;
 
-            if (_client == null) return; // בלי לקוח רשת – אין ריענון
+            var wanted = (baseCurrencies ?? new List<string>())
+                .Select(Norm)
+                .Where(c => c != "" && c != "ILS")
+                .Distinct()
+                .ToList();
 
-            var live = await _client.GetLatestAsync(baseCurrencies);
+            if (wanted.Count == 0)
+                return;
+
+            bool needRefresh = false;
+
+            foreach (var code in wanted)
+            {
+                var existing = await _ratesRepo.GetRateAsync(code);
+
+                if (existing == null ||
+                    existing.RateToILS <= 0m ||
+                    existing.LastUpdatedUtc == default(DateTime) ||
+                    DateTime.UtcNow - existing.LastUpdatedUtc.ToUniversalTime() > _ttl)
+                {
+                    needRefresh = true;
+                    break;
+                }
+            }
+
+            if (!needRefresh)
+                return;
+
+            var live = await _client.GetLatestAsync(wanted);
+
             foreach (var kv in live)
             {
+                var code = Norm(kv.Key);
+
+                if (code == "" || kv.Value <= 0m)
+                    continue;
+
                 await _ratesRepo.UpsertAsync(new CurrencyRate
                 {
-                    Code = kv.Key,
+                    Code = code,
                     RateToILS = kv.Value,
                     LastUpdatedUtc = DateTime.UtcNow
                 });
             }
         }
 
-      
-      
-       
         public async Task<decimal> ConvertAsync(decimal amount, string fromCode, string toCode)
         {
             fromCode = Norm(fromCode);
@@ -74,25 +96,23 @@ namespace MoneyMap.Services
             if (amount == 0m || fromCode == toCode)
                 return amount;
 
-            decimal fromToIls = 1m, ilsToTo = 1m;
+            decimal fromToIls = 1m;
+            decimal toToIls = 1m;
 
             if (fromCode != "ILS")
-            {
-                var r = await _ratesRepo.GetRateAsync(fromCode);
-                fromToIls = r?.RateToILS ?? 1m;
-            }
+                fromToIls = await GetRateToIlsPreferDbAsync(fromCode);
 
             if (toCode != "ILS")
-            {
-                var r = await _ratesRepo.GetRateAsync(toCode);
-                ilsToTo = (r is null || r.RateToILS == 0m) ? 1m : 1m / r.RateToILS;
-            }
+                toToIls = await GetRateToIlsPreferDbAsync(toCode);
 
-            return amount * fromToIls * ilsToTo;
+            decimal amountInIls = amount * fromToIls;
+
+            if (toCode == "ILS")
+                return amountInIls;
+
+            return amountInIls / toToIls;
         }
 
-        /// עיצוב סכום לפי המטבע המועדף.
-        
         public async Task<string> FormatAmountForDisplayAsync(decimal amount, string amountCurrencyCode, int decimals = 2)
         {
             var preferred = await GetPreferredCurrencyCodeAsync();
@@ -101,17 +121,19 @@ namespace MoneyMap.Services
 
         public async Task<string> FormatAsync(decimal amount, string fromCode, string toCode, int decimals = 2)
         {
+            toCode = Norm(toCode);
+
             var converted = await ConvertAsync(amount, fromCode, toCode);
             var symbol = GetCurrencySymbol(toCode);
+
             var formatted = Math.Round(converted, decimals)
-                                .ToString($"N{decimals}", CultureInfo.InvariantCulture);
-            return !string.IsNullOrEmpty(symbol)
-                ? $"{symbol}{formatted}"
-                : $"{formatted} {Norm(toCode)}";
+                .ToString("N" + decimals, CultureInfo.InvariantCulture);
+
+            if (!string.IsNullOrEmpty(symbol))
+                return symbol + formatted;
+
+            return formatted + " " + toCode;
         }
-
-
-        /// שליפת יחס המרה ישיר בין שני מטבעות (אם קיים בטבלה).
 
         public async Task<decimal?> GetRateAsync(string fromCode, string toCode)
         {
@@ -121,62 +143,101 @@ namespace MoneyMap.Services
             if (fromCode == toCode)
                 return 1m;
 
-            decimal fromToIls = 1m;
-            decimal toToIls = 1m;
-
-            if (fromCode != "ILS")
+            try
             {
-                var rFrom = await _ratesRepo.GetRateAsync(fromCode);
+                decimal fromToIls = 1m;
+                decimal toToIls = 1m;
 
-                if (rFrom == null || rFrom.RateToILS <= 0m)
-                    return null;
+                if (fromCode != "ILS")
+                    fromToIls = await GetRateToIlsPreferDbAsync(fromCode);
 
-                fromToIls = rFrom.RateToILS;
+                if (toCode != "ILS")
+                    toToIls = await GetRateToIlsPreferDbAsync(toCode);
+
+                return fromToIls / toToIls;
             }
-
-            if (toCode != "ILS")
+            catch
             {
-                var rTo = await _ratesRepo.GetRateAsync(toCode);
-
-                if (rTo == null || rTo.RateToILS <= 0m)
-                    return null;
-
-                toToIls = rTo.RateToILS;
+                return null;
             }
-
-            return fromToIls / toToIls;
         }
 
-
-        // --- ניהול המטבע המועדף ---
         public Task<string> GetPreferredCurrencyCodeAsync()
         {
-            var code = Preferences.Get(PrefKeyPreferredCurrency, DefaultCurrency);
-            return Task.FromResult(Norm(code));
+            // כרגע אין בחירת מטבע ראשי באפליקציה, לכן ברירת המחדל לתצוגה היא שקל.
+            // אם בעתיד תחזיר בחירת מטבע ראשי, אפשר להשתמש שוב ב-Preferences.
+            return Task.FromResult("ILS");
         }
 
         public Task SetPreferredCurrencyAsync(string code)
         {
-            Preferences.Set(PrefKeyPreferredCurrency, Norm(code));
+            var normalized = Norm(code);
+
+            if (normalized != "ILS" && normalized != "USD" && normalized != "EUR")
+                normalized = "ILS";
+
+            Preferences.Set(PrefKeyPreferredCurrency, normalized);
+            Preferences.Set(OldPrefKeyPreferredCurrency, normalized);
+
             return Task.CompletedTask;
         }
 
-        // --- עזרים ---
-        private static string Norm(string code) =>
-            (code ?? "").Trim().ToUpperInvariant();
+        private async Task<decimal> GetRateToIlsPreferDbAsync(string code)
+        {
+            code = Norm(code);
+
+            if (code == "ILS")
+                return 1m;
+
+            // 1. קודם מנסים לקרוא מהטבלה.
+            var existing = await _ratesRepo.GetRateAsync(code);
+
+            if (existing != null && existing.RateToILS > 0m)
+                return existing.RateToILS;
+
+            // 2. רק אם אין שער בטבלה, מנסים להביא מהאינטרנט.
+            await TryRefreshRatesSafeAsync(new[] { code });
+
+            // 3. בודקים שוב את הטבלה אחרי ניסיון הרענון.
+            existing = await _ratesRepo.GetRateAsync(code);
+
+            if (existing != null && existing.RateToILS > 0m)
+                return existing.RateToILS;
+
+            throw new Exception("לא נמצא שער מטבע תקין עבור " + code);
+        }
+
+        private async Task TryRefreshRatesSafeAsync(IEnumerable<string> codes)
+        {
+            try
+            {
+                await RefreshRatesIfNeededAsync(codes);
+            }
+            catch
+            {
+                // לא מפילים את האפליקציה בגלל בנק ישראל/אינטרנט.
+                // אם אחרי זה אין שער בטבלה, מי שקרא לפונקציה יקבל שגיאה ברורה.
+            }
+        }
+
+        private static string Norm(string code)
+        {
+            return (code ?? "").Trim().ToUpperInvariant();
+        }
 
         private static string GetCurrencySymbol(string code)
         {
             code = Norm(code);
-            return code switch
+
+            switch (code)
             {
-                "ILS" => "₪",
-                "USD" => "$",
-                "EUR" => "€",
-                "GBP" => "£",
-                "JPY" => "¥",
-                _ => ""
-            };
+                case "ILS": return "₪";
+                case "USD": return "$";
+                case "EUR": return "€";
+                case "GBP": return "£";
+                case "JPY": return "¥";
+                default: return "";
+            }
         }
     }
 }
