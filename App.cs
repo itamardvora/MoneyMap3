@@ -22,9 +22,7 @@ namespace MoneyMap
         public static CurrencyRateRepository CurrencyRateRepo { get; private set; }
         public static IncomeRepository Incomes { get; private set; }
 
-        // משאירים את זה זמנית כי הרבה Repositories אצלך כנראה קוראים ל:
-        // App.BackupState?.MarkExpensesChanged()
-        // App.BackupState?.MarkInvestmentsChanged()
+       
         public static FirebaseBackupState BackupState { get; private set; }
 
         public static UserService UserService { get; private set; }

@@ -8,7 +8,7 @@ namespace MoneyMap.Models
     public class Investment
     {
         [ForeignKey(typeof(User))]
-        public int UserID { get; set; }
+        public int UserID { get; set; }  // קישור למשתמש שביצעה את הקנייה 
 
         [PrimaryKey, AutoIncrement]
         public int InvestmentID { get; set; }
@@ -27,14 +27,12 @@ namespace MoneyMap.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-        [Ignore]// משהו שכל הזמןמשתנה
+        [Ignore]//  לא שומרים אדאטה בייס משהו שכל הזמןמשתנה
         public double CurrentPrice { get; set; }
 
-        // --- מטבע מקור של הקנייה (ILS / USD / EUR). ברירת מחדל ILS.
         [NotNull]
         public string OriginalCurrency { get; set; } = "ILS";
 
-        // כמה ILS ל-1 OriginalCurrency בתאריך הקנייה (שער היסטורי)
         [NotNull]
         public decimal FxRateToIlsAtPurchase { get; set; } = 1m;
 

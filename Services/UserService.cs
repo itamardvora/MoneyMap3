@@ -5,22 +5,23 @@ using MoneyMap.DAL;
 using MoneyMap.Models;
 using Xamarin.Essentials;
 
+
 namespace MoneyMap.Services
 {
     public class UserService
     {
-        private readonly UserRepository _users;
+        private readonly UserRepository _users; //שומר הפניה לUserRepository
 
         public const string AdminEmail = "admin@moneymap.local";
         public const string AdminPassword = "Admin123!";
         public const string AdminDisplayName = "אדמין";
 
-        public UserService(UserRepository userRepository)
+        public UserService(UserRepository userRepository) //מקבל UserRepository מוכן ושומר אותו בשדה _users
         {
             _users = userRepository;
         }
 
-        public int? CurrentUserId => UserSession.LoggedInUserId;
+        public int? CurrentUserId => UserSession.LoggedInUserId; // מחזיר את מזהה המשתמש שמחובר כרגע.
 
         public bool IsAdminCredentials(string email, string password)
         {
@@ -31,7 +32,7 @@ namespace MoneyMap.Services
                    password == AdminPassword;
         }
 
-        public void SignInAsAdmin()
+        public void SignInAsAdmin() // מחברת את המערכת כאדמין ומנקה נתוני התחברות של משתמש רגיל מהשמירה המקומית
         {
             UserSession.SetAdmin(AdminDisplayName);
 

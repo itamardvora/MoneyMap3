@@ -11,7 +11,7 @@ namespace MoneyMap.DAL
     {
         private readonly SQLiteAsyncConnection _db;
 
-        public BudgetRepository(SQLiteAsyncConnection db)
+        public BudgetRepository(SQLiteAsyncConnection db) // מקבלת חיבור לדאטה בייס 
         {
             _db = db;
         }
@@ -28,7 +28,7 @@ namespace MoneyMap.DAL
             App.BackupState?.MarkChanged();
         }
 
-        public async Task<Budget> GetUserBudget(int userId, int categoryId, DateTime month)
+        public async Task<Budget> GetUserBudget(int userId, int categoryId, DateTime month) // מחזירה תקציב מסוים של משתמש לפי קטגוריה וחודש
         {
             var allBudgets = await _db.Table<Budget>()
                 .Where(b => b.UserID == userId && b.CategoryID == categoryId)
@@ -41,7 +41,7 @@ namespace MoneyMap.DAL
                 b.BudgetMonth.Month == targetMonth.Month);
         }
 
-        public async Task<List<Budget>> GetUserBudgets(int userId, DateTime? month = null)
+        public async Task<List<Budget>> GetUserBudgets(int userId, DateTime? month = null) // מחזירה את כל התקציבים של משתמש, ואם נשלח חודש מחזירה רק את תקציבי אותו חודש
         {
             var allBudgets = await _db.Table<Budget>()
                 .Where(b => b.UserID == userId)

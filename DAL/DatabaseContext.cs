@@ -11,10 +11,10 @@ namespace MoneyMap.DAL
     public static class DatabaseContext
     {
         private static SQLiteAsyncConnection _database;
-        private static readonly SemaphoreSlim _initLock = new SemaphoreSlim(1, 1);
-        private static bool _initialized = false;
+        private static readonly SemaphoreSlim _initLock = new SemaphoreSlim(1, 1); // מנעול שמוודא שרק פעולה אחת יכולה לאתחל את מסד הנתונים בכל רגע, כדי למנוע אתחול כפול במקביל
+        private static bool _initialized = false; // מונע אתחול מיותר שוש ושוב
 
-        public static SQLiteAsyncConnection GetConnection()
+        public static SQLiteAsyncConnection GetConnection() // פעולה שמחזירה את הקשר לטבלה 
         {
             if (_database == null)
                 throw new InvalidOperationException("DatabaseContext was not initialized. Call InitAsync() first.");
@@ -22,17 +22,18 @@ namespace MoneyMap.DAL
             return _database;
         }
 
-        public static async Task InitAsync()
+        public static async Task InitAsync() // מאתחל את ממסד הנתונים במידת הצורך 
         {
             if (_initialized) return;
 
             await _initLock.WaitAsync();
             try
             {
-                if (_initialized) return;
+                if (_initialized)
+                    return;
 
-                var databasePath = Path.Combine(FileSystem.AppDataDirectory, "MoneyMap.db3");
-                _database = new SQLiteAsyncConnection(databasePath);
+                var databasePath = Path.Combine(FileSystem.AppDataDirectory, "MoneyMap.db3"); // יצירת הנתיב לקובץ של הדאטה בייס
+                _database = new SQLiteAsyncConnection(databasePath); // יצירת החיבור
 
                 await _database.CreateTableAsync<User>();
                 await _database.CreateTableAsync<Investment>();
@@ -41,15 +42,13 @@ namespace MoneyMap.DAL
                 await _database.CreateTableAsync<Category>();
                 await _database.CreateTableAsync<StockPrices>();
                 await _database.CreateTableAsync<CurrencyRate>();
-
-                // חדש: טבלת הכנסות
                 await _database.CreateTableAsync<Income>();
 
                 _initialized = true;
             }
             finally
             {
-                _initLock.Release();
+                _initLock.Release();// לא משנה אם האתחול הצליח או נכשל תשחרר את הנעילה
             }
         }
     }

@@ -160,16 +160,13 @@ namespace MoneyMap.Services
             if (code == "ILS")
                 return 1m;
 
-            // 1. קודם מנסים לקרוא מהטבלה.
             var existing = await _ratesRepo.GetRateAsync(code);
 
             if (existing != null && existing.RateToILS > 0m)
                 return existing.RateToILS;
 
-            // 2. רק אם אין שער בטבלה, מנסים להביא מהאינטרנט.
             await TryRefreshRatesSafeAsync(new[] { code });
 
-            // 3. בודקים שוב את הטבלה אחרי ניסיון הרענון.
             existing = await _ratesRepo.GetRateAsync(code);
 
             if (existing != null && existing.RateToILS > 0m)

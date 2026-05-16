@@ -349,10 +349,7 @@ namespace MoneyMap.Services
 
 
 
-        // ============================================================
-        // גיבוי מלא של כל נתוני המשתמש ל-Firestore
-        // SQLite נשאר המרכז, Firestore הוא גיבוי
-        // ============================================================
+        
         public static async Task BackupAllUserDataAsync()
         {
             EnsureInitialized();
@@ -373,10 +370,7 @@ namespace MoneyMap.Services
             await BackupIncomesAsync(localUserId, firebaseUid);
         }
 
-        // ============================================================
-        // גיבוי השקעות
-        // users/{uid}/investments/{investmentId}
-        // ============================================================
+        
         public static async Task BackupInvestmentsAsync(int localUserId, string firebaseUid)
         {
             EnsureInitialized();
@@ -414,10 +408,7 @@ namespace MoneyMap.Services
             }
         }
 
-        // ============================================================
-        // גיבוי תקציבים
-        // users/{uid}/budgets/{budgetId}
-        // ============================================================
+        
         public static async Task BackupBudgetsAsync(int localUserId, string firebaseUid)
         {
             EnsureInitialized();
@@ -450,10 +441,7 @@ namespace MoneyMap.Services
             }
         }
 
-        // ============================================================
-        // גיבוי הוצאות
-        // users/{uid}/expenses/{expenseId}
-        // ============================================================
+       
         public static async Task BackupExpensesAsync(int localUserId, string firebaseUid)
         {
             EnsureInitialized();
@@ -488,10 +476,7 @@ namespace MoneyMap.Services
             }
         }
 
-        // ============================================================
-        // גיבוי קטגוריות
-        // users/{uid}/categories/{categoryId}
-        // ============================================================
+        
         public static async Task BackupCategoriesAsync(int localUserId, string firebaseUid)
         {
             EnsureInitialized();
@@ -522,10 +507,7 @@ namespace MoneyMap.Services
             }
         }
 
-        // ============================================================
-        // גיבוי הכנסות
-        // users/{uid}/incomes/{incomeId}
-        // ============================================================
+        
         public static async Task BackupIncomesAsync(int localUserId, string firebaseUid)
         {
             EnsureInitialized();
@@ -558,11 +540,7 @@ namespace MoneyMap.Services
             }
         }
 
-        // ============================================================
-        // מחיקה של collection לפני גיבוי מלא
-        // חשוב כדי שאם מחקת השקעה/הוצאה מקומית,
-        // היא לא תישאר בגיבוי הישן ב-Firestore.
-        // ============================================================
+        
         private static async Task ClearCollectionAsync(string firebaseUid, string collectionName)
         {
             EnsureInitialized();
