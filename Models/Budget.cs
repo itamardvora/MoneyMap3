@@ -5,7 +5,7 @@ using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using SQLite;
-using SQLiteNetExtensions.Attributes;
+using SQLiteNetExtensions.Attributes;// הספריה שמייבאת את הקבצים שמאפשרים את הקשרים בין המשנתי םבטלה 
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,7 +20,8 @@ namespace MoneyMap.Models
         public int BudgetID { get; set; }
 
 
-        [ForeignKey(typeof(User))]
+        [ForeignKey(typeof(User))] //  לכל תקציב יש משתמש אחד
+
         public int UserID { get; set; }
 
 

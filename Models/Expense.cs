@@ -18,8 +18,7 @@ namespace MoneyMap.Models
         [NotNull] public string Reason { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-        // ✅ השדה היחיד לשמירת קבלה
-        public string ReceiptPath { get; set; }
+        public string ReceiptPath { get; set; } // שומר איפה התמונה נמצאת
 
     
     }
