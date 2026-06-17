@@ -23,6 +23,8 @@ namespace MoneyMap.Adapters
         public bool IsProfit { get; set; }
     }
 
+
+    //אחראית על רשימת ההשקעות במזך ועושה בצורה יפה
     public class InvestmentAdapter : RecyclerView.Adapter
     {
         private List<InvestmentDisplayRow> _rows;
@@ -72,6 +74,8 @@ namespace MoneyMap.Adapters
         }
     }
 
+
+    // מחזיק את רכיבי התצוגה של שורת השקעה ומטפל בלחצן המחיקה
     public class InvestmentViewHolder : RecyclerView.ViewHolder, View.IOnClickListener
     {
         public TextView SymbolText { get; }

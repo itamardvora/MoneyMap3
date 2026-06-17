@@ -15,7 +15,7 @@
             IsAdmin = false;
         }
 
-        public static void SetAdmin(string adminName)
+        public static void SetAdmin(string adminName) // מגדירה התחברות של מנהל מערכת
         {
             LoggedInUserId = null;
             LoggedInUserName = adminName;

@@ -40,7 +40,7 @@ namespace MoneyMap.Models
         [NotNull]
         public decimal TotalInIls { get; set; } = 0m;
 
-        // נתיב קובץ קבלה (אופציונלי)
-        public string ReceiptImagePath { get; set; }
+        // נתיב קובץ קבלה אופציונלי
+        public string ReceiptImagePath { get; set; }// לא מצשתצמש בזה
     }
 }

@@ -72,13 +72,7 @@ namespace MoneyMap.Services
 
             decimal fxToIlsAtPurchase = 1m;
 
-            /*
-             * חשוב:
-             * השמירה לא תלויה במחיר מניה נוכחי.
-             * כלומר לא קוראים כאן ל-StockPriceService.
-             * הסיבה: אם ה-API איטי / לא עובד / עבר מגבלה,
-             * עדיין צריך שההשקעה תישמר ותופיע במסך.
-             */
+           
 
             if (originalCurrency != "ILS")
             {
@@ -93,8 +87,8 @@ namespace MoneyMap.Services
                     }
                     catch
                     {
-                        // לא מפילים שמירה בגלל שער מטבע.
-                        // אם אין שער, נשמור עם 1 כדי שההשקעה לא תיעלם.
+                        // לא מפילים שמירה בגלל שער מטבע
+                        // אם אין שער, נשמור עם 1 כדי שההשקעה לא תיעלם
                         fxToIlsAtPurchase = 1m;
                     }
                 }
@@ -116,7 +110,7 @@ namespace MoneyMap.Services
             await _repo.AddInvestment(inv);
         }
 
-        public Task AddInvestment(int userId, string symbol, DateTime buyDate, int buyPrice, decimal quantity)
+        public Task AddInvestment(int userId, string symbol, DateTime buyDate, int buyPrice, decimal quantity) // לא בשימוש אבל קורא לפעולה של הוספת השקעה 
         {
             return AddInvestment(userId, symbol, quantity, buyPrice, buyDate, "ILS");
         }
@@ -136,7 +130,7 @@ namespace MoneyMap.Services
             return _repo.GetAllByUser(userId);
         }
 
-        public async Task<decimal> CalculateProfitAsync(Investment inv)
+        public async Task<decimal> CalculateProfitAsync(Investment inv) // מחשב רווח הפסד של מניה 
         {
             if (inv == null)
                 return 0m;
@@ -181,7 +175,7 @@ namespace MoneyMap.Services
             return currentValueIls - costIls;
         }
 
-        public async Task<decimal> CalculateReturnAsync(Investment inv)
+        public async Task<decimal> CalculateReturnAsync(Investment inv)// מחשב תשואה באחוזים 
         {
             if (inv == null)
                 return 0m;

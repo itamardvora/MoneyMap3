@@ -27,11 +27,13 @@ namespace MoneyMap.Services
             _ttl = ttl ?? TimeSpan.FromHours(24);
         }
 
-        public async Task EnsureBaseRatesAsync()
+        public async Task EnsureBaseRatesAsync() // דואג ששערים שצריך יהיו
         {
             await RefreshRatesIfNeededAsync(new[] { "USD", "EUR" });
         }
 
+
+       // מרענן שערי מטבע מהאינטרנט אם נתונים ישנים מידי 
         public async Task RefreshRatesIfNeededAsync(IEnumerable<string> baseCurrencies)
         {
             if (_client == null)
@@ -83,6 +85,8 @@ namespace MoneyMap.Services
             }
         }
 
+
+        // מבצע המרת מטבע
         public async Task<decimal> ConvertAsync(decimal amount, string fromCode, string toCode)
         {
             fromCode = Norm(fromCode);
@@ -109,7 +113,7 @@ namespace MoneyMap.Services
         }
 
      
-
+        // ממיר סכום כמו שצריך עם עיגול וסימבול
         public async Task<string> FormatAsync(decimal amount, string fromCode, string toCode, int decimals = 2)
         {
             toCode = Norm(toCode);
@@ -126,6 +130,8 @@ namespace MoneyMap.Services
             return formatted + " " + toCode;
         }
 
+
+        //מחזיר יחס המרה בין שני מטבעות בלי לבצע המרה של סכום
         public async Task<decimal?> GetRateAsync(string fromCode, string toCode)
         {
             fromCode = Norm(fromCode);
@@ -153,6 +159,8 @@ namespace MoneyMap.Services
             }
         }
 
+
+        // מנסה לקחת שער מהדאטה בייס אם אין לוקח מאי פי אי אם אין זורקת שגיאה
         private async Task<decimal> GetRateToIlsPreferDbAsync(string code)
         {
             code = Norm(code);
@@ -175,6 +183,7 @@ namespace MoneyMap.Services
             throw new Exception("לא נמצא שער מטבע תקין עבור " + code);
         }
 
+        // ניסיון רענון בטוח שלא מפיל את האפליקציה במקרה של כשל רשת
         private async Task TryRefreshRatesSafeAsync(IEnumerable<string> codes)
         {
             try
@@ -183,8 +192,8 @@ namespace MoneyMap.Services
             }
             catch
             {
-                // לא מפילים את האפליקציה בגלל בנק ישראל/אינטרנט.
-                // אם אחרי זה אין שער בטבלה, מי שקרא לפונקציה יקבל שגיאה ברורה.
+                // לא מפילים את האפליקציה בגלל בנק ישראל/אינטרנט
+                // אם אחרי זה אין שער בטבלה, מי שקרא לפונקציה יקבל שגיאה ברורה
             }
         }
 

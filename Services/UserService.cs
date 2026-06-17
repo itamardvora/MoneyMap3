@@ -21,7 +21,7 @@ namespace MoneyMap.Services
             _users = userRepository;
         }
 
-        public int? CurrentUserId => UserSession.LoggedInUserId; // מחזיר את מזהה המשתמש שמחובר כרגע.
+        public int? CurrentUserId => UserSession.LoggedInUserId; // מחזיר את מזהה המשתמש שמחובר כרגע
 
         public bool IsAdminCredentials(string email, string password)
         {

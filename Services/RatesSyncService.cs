@@ -12,21 +12,25 @@ namespace MoneyMap.Services
     [Service(Exported = false, Enabled = true, Name = "com.companyname.moneymap.Services.RatesSyncService")]
     public sealed class RatesSyncService : Service
     {
-        const string CHANNEL_ID = "sync_channel";
-        const int NOTIF_ID = 88017;
-        bool _running;
+        const string CHANNEL_ID = "sync_channel"; // 
+        const int NOTIF_ID = 88017;  // מזהה של ההתראה
+        bool _running; // מניעת הפעלה כפולה
 
+        // חייב לממש את הפעולה אבל אצלי לא בשימוש אז הוא נל
         public override IBinder OnBind(Intent intent) => null;
 
+
+        // מופעל כאשר Android מפעיל את השירות 
         public override StartCommandResult OnStartCommand(Intent intent, StartCommandFlags flags, int startId)
         {
             if (_running) return StartCommandResult.NotSticky;
-            _running = true;
+            _running = true; // מסמן שהשירות התחיל לעבוד
+
 
             if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
             {
                 EnsureChannel();
-                var n = new NotificationCompat.Builder(this, CHANNEL_ID)
+                var n = new NotificationCompat.Builder(this, CHANNEL_ID) // יוצר התראה שתוצג בזמן הסנכרון
                     .SetContentTitle("סנכרון נתונים")
                     .SetContentText("מעדכן שערי מטבע ומחירי מניות…")
                     .SetSmallIcon(Resource.Mipmap.ic_launcher) // תוודא שיש אייקון
@@ -39,7 +43,7 @@ namespace MoneyMap.Services
             return StartCommandResult.NotSticky;
         }
 
-        private async Task RunAsync()
+        private async Task RunAsync() // מבצע את כל תהליך עדכון הנתונים
         {
             try
             {
@@ -57,7 +61,7 @@ namespace MoneyMap.Services
                     try { await App.CurrencyService.EnsureBaseRatesAsync(); } catch { }
                 }
 
-                // מחירי מניות (חימום קאש לפי הסמלים אצל המשתמש)
+                // מחירי מניות חימום קאש לפי הסמלים אצל המשתמש
                 if (App.InvestmentService != null && App.StockPriceService != null)
                 {
                     try
@@ -86,7 +90,7 @@ namespace MoneyMap.Services
             }
         }
 
-        void EnsureChannel()
+        void EnsureChannel() // יוצר ערוץ התראות במערכת Android
         {
             if (Build.VERSION.SdkInt < BuildVersionCodes.O) return;
             var mgr = (NotificationManager)GetSystemService(NotificationService);

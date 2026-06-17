@@ -8,6 +8,7 @@ using MoneyMap.Models;
 
 namespace MoneyMap.Services
 {
+    // שירות לחישוב וניתוח תיק השקעות: שווי, עלות, רווח ותשואה כוללת לפי מחירי שוק ושערי מטבע.
     public class PortfolioService
     {
         private readonly InvestmentRepository _investments;
@@ -26,6 +27,8 @@ namespace MoneyMap.Services
 
         private static string Norm(string s) => (s ?? "").Trim().ToUpperInvariant();
 
+
+        // מחשב את עלות ההשקעה בשקלים לפי מחיר קנייה ושער מטבע בזמן הרכישה
         private decimal GetCostIls(Investment inv)
         {
             if (inv == null)
@@ -41,6 +44,9 @@ namespace MoneyMap.Services
             return inv.BuyPrice * inv.Quantity * fx;
         }
 
+
+
+       
         private async Task<Dictionary<string, decimal>> BuildPriceMap(IEnumerable<string> symbols)
         {
             var map = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
@@ -62,8 +68,10 @@ namespace MoneyMap.Services
             }
 
             return map;
-        }
+        } // מביא מחיר עדכני של מניה 
 
+
+        // ממיר ערך מדולרים לשקלים באמצעות CurrencyService
         private async Task<decimal?> ConvertUsdToIlsAsync(decimal amountUsd)
         {
             if (amountUsd == 0m)
@@ -87,6 +95,7 @@ namespace MoneyMap.Services
             }
         }
 
+        // מחשב סיכום כולל של תיק ההשקעות: שווי, עלות, רווח ותשואה באחוזים
         public async Task<PortfolioSummary> GetPortfolioSummaryAsync(int userId)
         {
             var summary = new PortfolioSummary();
@@ -125,6 +134,8 @@ namespace MoneyMap.Services
             return summary;
         }
 
+
+        // מוסיף לכל השקעה את מחיר השוק הנוכחי של המניה
         public async Task<List<Investment>> EnrichInvestmentsWithPrices(List<Investment> investments)
         {
             if (investments == null || investments.Count == 0)

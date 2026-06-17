@@ -19,19 +19,22 @@ namespace MoneyMap.Services
             };
         }
 
-        
+
+        // מחזיר את שער ההמרה מדולר לשקל
         public async Task<decimal> GetUsdToIlsAsync()
         {
             return await FetchRateFromBoiAsync("USD");
         }
 
       
+        //מחזיר שער יורו שקל
         public async Task<decimal> GetEurToIlsAsync()
         {
             return await FetchRateFromBoiAsync("EUR");
         }
 
-      
+
+        // שולח בקשה לבנק ישראל ומחזיר שער מטבע לשקל
         private async Task<decimal> FetchRateFromBoiAsync(string baseCurrency)
         {
 
@@ -44,14 +47,14 @@ namespace MoneyMap.Services
       "&c%5BCOUNTER_CURRENCY%5D=ILS";
 
 
-            var resp = await _http.GetAsync(url);
-            resp.EnsureSuccessStatusCode();
+            var resp = await _http.GetAsync(url); // שליחת בקשת HTTP לשרת
+            resp.EnsureSuccessStatusCode(); // זורק שגיאה אם הבקשה נכשלה 
 
-            var json = await resp.Content.ReadAsStringAsync();
+            var json = await resp.Content.ReadAsStringAsync(); // קריאת התשובה כטקסט JSON
 
-            using (var doc = JsonDocument.Parse(json))
+            using (var doc = JsonDocument.Parse(json)) // ממיר למשהו שניתן לקריא ומשחרר מהזיכרון
             {
-                decimal? rate = ExtractRateForCurrency(doc, baseCurrency);
+                decimal? rate = ExtractRateForCurrency(doc, baseCurrency); // מנסה להוןציא את ההשער מהקובץ
                 if (rate.HasValue)
                     return rate.Value;
             }
@@ -60,6 +63,7 @@ namespace MoneyMap.Services
         }
 
 
+       // מוצא את שערי המטבע מתוך קובץ גייסון
         private decimal? ExtractRateForCurrency(JsonDocument doc, string wantedBaseCurrency)
         {
             if (!doc.RootElement.TryGetProperty("data", out var dataElem))
@@ -68,7 +72,7 @@ namespace MoneyMap.Services
             if (!dataElem.TryGetProperty("dataSets", out var dataSetsElem))
                 return null;
 
-            if (dataSetsElem.GetArrayLength() == 0)
+            if (dataSetsElem.GetArrayLength() == 0) // אם נתונים מחזיר נל
                 return null;
 
             var dataSet0 = dataSetsElem[0];
@@ -165,6 +169,8 @@ namespace MoneyMap.Services
             return null;
         }
 
+
+        // ממיר ערך גיסון למספר עשרוני 
         private bool TryReadDecimal(JsonElement element, out decimal value)
         {
             value = 0m;
@@ -185,6 +191,8 @@ namespace MoneyMap.Services
             return false;
         }
 
+
+        // פונקציה ששולפת ערך ממערך של ממדי נתונים בצורה בטוחה ובודקת גבולות של מערך בשיבל למנוע קריסות
         private string SafeGetDimVal(
             System.Collections.Generic.List<System.Collections.Generic.List<string>> dimValues,
             int dimPosition,

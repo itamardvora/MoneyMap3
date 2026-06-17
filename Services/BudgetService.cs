@@ -13,7 +13,7 @@ namespace MoneyMap.Services
         private readonly ExpenseRepository _expenseRepo;
         private readonly CategoryRepository _categoryRepo;
 
-        public BudgetService(BudgetRepository budgetRepo, ExpenseRepository expenseRepo, CategoryRepository categoryRepo)
+        public BudgetService(BudgetRepository budgetRepo, ExpenseRepository expenseRepo, CategoryRepository categoryRepo) // פעולה בונה
         {
             _budgetRepo = budgetRepo;
             _expenseRepo = expenseRepo;
@@ -49,6 +49,8 @@ namespace MoneyMap.Services
             await _budgetRepo.Add(budget);
         }
 
+
+        // מחזיר מצב תקציב: כמה הוצא, כמה נשאר, ואחוז שימוש לכל קטגוריה
         public async Task<List<BudgetStatus>> GetUserBudgetStatus(int userId, DateTime budgetMonth)
         {
             var month = new DateTime(budgetMonth.Year, budgetMonth.Month, 1);
@@ -81,6 +83,8 @@ namespace MoneyMap.Services
             return result;
         }
 
+
+        // מחזיר כמה כסף נשאר לכל קטגוריה בתקציב החודשי
         public async Task<Dictionary<int, decimal>> GetRemainingBudget(int userId, DateTime budgetMonth)
         {
             var month = new DateTime(budgetMonth.Year, budgetMonth.Month, 1);
@@ -97,7 +101,7 @@ namespace MoneyMap.Services
             }
 
             return remaining;
-        }
+        } // לא בששימוש
 
         
     }

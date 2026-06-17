@@ -8,7 +8,7 @@ namespace MoneyMap.DAL
     public class UserRepository
     {
         private readonly SQLiteAsyncConnection _db;
-        private static bool _schemaEnsured = false;
+        private static bool _schemaEnsured = false; // דגל פנימי שמוודא שהטבלה והאינדקסים נוצרו פעם אחת בלבד
 
         public UserRepository(SQLiteAsyncConnection db)
         {
@@ -16,6 +16,8 @@ namespace MoneyMap.DAL
             _ = EnsureSchemaAsync();
         }
 
+
+        // אחראית לוודא שטבלת המשתמשים קיימת ומעודכנת עם כל העמודות והאינדקסים הדרושים
         private async Task EnsureSchemaAsync()
         {
             if (_schemaEnsured) return;

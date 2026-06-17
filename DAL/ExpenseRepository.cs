@@ -17,13 +17,14 @@ namespace MoneyMap.DAL
         private readonly SQLiteAsyncConnection _db;
         private static bool _schemaEnsured = false;
 
-        public ExpenseRepository(SQLiteAsyncConnection db)
+        public ExpenseRepository(SQLiteAsyncConnection db) 
         {
             _db = db;
             _ = EnsureSchemaAsync();
         }
 
-        private async Task EnsureSchemaAsync()
+        // מוודא שטבלת ההוצאות והאינדקסים הדרושים קיימים במסד
+        private async Task EnsureSchemaAsync() 
         {
             if (_schemaEnsured)
                 return;
@@ -49,7 +50,8 @@ namespace MoneyMap.DAL
             App.BackupState?.MarkChanged();
         }
 
-        public Task<List<Expense>> GetAllByUser(int userId)
+        // מחזיר את כל הוצאות המשתמש מהחדשה לישנה
+        public Task<List<Expense>> GetAllByUser(int userId) 
         {
             return _db.Table<Expense>()
                 .Where(e => e.UserID == userId)
@@ -57,6 +59,7 @@ namespace MoneyMap.DAL
                 .ToListAsync();
         }
 
+        // מחזיר את הוצאות המשתמש עבור חודש מסוים
         public Task<List<Expense>> GetUserExpenses(int userId, DateTime month)
         {
             var start = new DateTime(month.Year, month.Month, 1);
@@ -67,6 +70,7 @@ namespace MoneyMap.DAL
                 .ToListAsync();
         }
 
+        // מחזיר כמה כסף יצא בכל קטגוריה
         public Task<List<ExpenseCategoryTotal>> GetExpensesByCategory(int userId, DateTime month)
         {
             var start = new DateTime(month.Year, month.Month, 1);
@@ -96,6 +100,7 @@ namespace MoneyMap.DAL
             }
         }
 
+        // מחזיר הוצאה מסוימת לפי מזהה עבור המשתמש המבוקש
         public Task<Expense> GetById(int userId, int expenseId)
         {
             return _db.Table<Expense>()

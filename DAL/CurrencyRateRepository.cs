@@ -16,15 +16,17 @@ namespace MoneyMap.DAL
             _db.CreateTableAsync<CurrencyRate>().Wait();
         }
 
+        // מחזיר את שער המטבע לפי קוד המטבע שנשלח
         public async Task<CurrencyRate> GetRateAsync(string code)
         {
-            code = Normalize(code);
+            code = Normalize(code); //ממיר לאותיות גדולות
 
             return await _db.Table<CurrencyRate>()
                 .Where(r => r.Code == code)
                 .FirstOrDefaultAsync();
         }
 
+        // מוסיף שער מטבע חדש או מעדכן שער קיים לפי קוד המטבע
         public async Task UpsertAsync(CurrencyRate rate)
         {
             if (rate == null)

@@ -14,6 +14,7 @@ namespace MoneyMap.Services
             _categoryRepository = categoryRepository;
         }
 
+        // מוודא שקיימות קטגוריות בסיסיות במערכת 
         public async Task EnsureDefaultCategoriesAsync()
         {
             await _categoryRepository.EnsureDefaultCategoriesAsync();
