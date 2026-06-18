@@ -12,8 +12,12 @@ using System.Collections.Generic;
 using System.Linq;
 using MoneyMap.Models;
 
+
+
 namespace MoneyMap.DAL
 {
+
+    // אחראית על שמירה ושליפה של מחירי מניות שנשמרו במטמון המקומי
     public class StockPriceCacheRepository
     {
         private readonly SQLiteAsyncConnection _db;

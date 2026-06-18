@@ -21,7 +21,7 @@ namespace MoneyMap.Services
 
         private const string UsersCollection = "users";
 
-        public static void InitializeFirebase(Context context)
+        public static void InitializeFirebase(Context context) // מאתחל חיבור לפייר בייס
         {
             if (_initialized)
                 return;
@@ -75,7 +75,7 @@ namespace MoneyMap.Services
             _initialized = true;
         }
 
-        public static async Task<string> RegisterUserAsync(User user)
+        public static async Task<string> RegisterUserAsync(User user) // יצירת משתמש חדש
         {
             EnsureInitialized();
 
@@ -110,7 +110,7 @@ namespace MoneyMap.Services
             return user.FirebaseUid;
         }
 
-        public static async Task<string> SignInUserAsync(string email, string password)
+        public static async Task<string> SignInUserAsync(string email, string password) 
         {
             EnsureInitialized();
 
@@ -181,7 +181,7 @@ namespace MoneyMap.Services
             return user;
         }
 
-        public static async Task SaveUserToFirestoreAsync(User user)
+        public static async Task SaveUserToFirestoreAsync(User user) // מעדכן משתמש
         {
             EnsureInitialized();
 
@@ -212,7 +212,7 @@ namespace MoneyMap.Services
                 .AsAsync();
         }
 
-        public static async Task UpdateUserAsync(User user)
+        public static async Task UpdateUserAsync(User user) 
         {
             EnsureInitialized();
 
@@ -243,7 +243,7 @@ namespace MoneyMap.Services
             UserSession.Clear();
         }
 
-        private static async Task SaveUserLocallyAsync(User user)
+        private static async Task SaveUserLocallyAsync(User user) // שומר או מעדכן משתמש במסד נתונים מקומי
         {
             var existingByUid = string.IsNullOrWhiteSpace(user.FirebaseUid)
                 ? null
@@ -298,7 +298,7 @@ namespace MoneyMap.Services
             UserSession.LoggedInUserName = user.FullName;
         }
 
-        private static void NormalizeUser(User user)
+        private static void NormalizeUser(User user) // מנקה ומנרמל נתוני משתמש לפני שמירה
         {
             user.FullName = (user.FullName ?? "").Trim();
             user.Email = (user.Email ?? "").Trim().ToLowerInvariant();
@@ -306,7 +306,7 @@ namespace MoneyMap.Services
             user.Role = string.IsNullOrWhiteSpace(user.Role) ? "User" : user.Role;
         }
 
-        private static void ValidateRegisterUser(User user)
+        private static void ValidateRegisterUser(User user) // בודק תקינות נתוני הרשמה לפני יצירת משתמש
         {
             if (string.IsNullOrWhiteSpace(user.FullName))
                 throw new Exception("שם מלא חסר");
@@ -324,13 +324,13 @@ namespace MoneyMap.Services
                 throw new Exception("תאריך לידה לא תקין");
         }
 
-        private static void EnsureInitialized()
+        private static void EnsureInitialized() // בודק שכל הפייר בייס וההתחברות מאותחלים לפני שימוש
         {
             if (!_initialized || _auth == null || _db == null)
                 throw new Exception("Firebase לא מאותחל. קרא קודם ל-InitializeFirebase");
         }
 
-        private static DateTime ParseDate(string value, DateTime fallback)
+        private static DateTime ParseDate(string value, DateTime fallback) // הפוך סטרינג לתאריך
         {
             if (string.IsNullOrWhiteSpace(value))
                 return fallback;
@@ -347,10 +347,7 @@ namespace MoneyMap.Services
             return fallback;
         }
 
-
-
-        
-        public static async Task BackupAllUserDataAsync()
+        public static async Task BackupAllUserDataAsync() // מבצע גיבוי מלא של הכל לפייר בבייס
         {
             EnsureInitialized();
 
@@ -541,7 +538,7 @@ namespace MoneyMap.Services
         }
 
         
-        private static async Task ClearCollectionAsync(string firebaseUid, string collectionName)
+        private static async Task ClearCollectionAsync(string firebaseUid, string collectionName) // מוחק את כל הנתונים מהפייר בייס ממשהו מסויים 
         {
             EnsureInitialized();
 

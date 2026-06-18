@@ -3,8 +3,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using System;
 
-namespace MoneyMap.DAL
+// מוודאת שטבלת ההשקעות מעודכנת ומכילה את כל העמודות הדרושות לגרסה הנוכחית של האפליקציה
 // תפקיד המחלקה לראות שהטבלת השקעות עודמת בשינוייים ובנויה כמו שצריך 
+namespace MoneyMap.DAL
+
 {
     public class InvestmentMigrationHelper
     {
@@ -13,11 +15,12 @@ namespace MoneyMap.DAL
 
         public InvestmentMigrationHelper(SQLiteAsyncConnection db) => _db = db;
 
-        public async Task EnsureInvestmentCurrencyColumnsAsync() //מוודאת ששדות מסוימים קיימים בטבלה.
+        public async Task EnsureInvestmentCurrencyColumnsAsync() // מוודאת שכל העמודות הדרושות קיימות בטבלת ההשקעות
         {
-            // מביא סכמת טבלה
+            // שולף את רשימת העמודות הקיימות בטבלה
             var cols = await _db.QueryAsync<TableInfoRow>($"PRAGMA table_info({TableName})");
 
+            // מוסיפה עמודה חדשה לטבלה אם היא עדיין לא קיימת
             async Task EnsureColAsync(string name, string type, string defaultSql = null)
             {
                 if (!cols.Any(c => string.Equals(c.name, name, StringComparison.OrdinalIgnoreCase)))
@@ -29,12 +32,12 @@ namespace MoneyMap.DAL
                 }
             }
 
-            // יישור שמות לעומת המודל
+
+            // מוסיף עמודה למטבע המקורי של ההשקעה
             await EnsureColAsync("OriginalCurrency", "TEXT", "'ILS'");
             await EnsureColAsync("FxRateToIlsAtPurchase", "REAL", "1");
             await EnsureColAsync("TotalInIls", "REAL", "0");
-            await EnsureColAsync("ReceiptImagePath", "TEXT", "NULL");
-
+            await EnsureColAsync("ReceiptImagePath", "TEXT", "NULL");//לא בשימוש
             await _db.ExecuteAsync($"CREATE INDEX IF NOT EXISTS idx_invest_user ON {TableName}(UserID)");
             await _db.ExecuteAsync($"CREATE INDEX IF NOT EXISTS idx_invest_symbol ON {TableName}(StockSymbol)");
         }

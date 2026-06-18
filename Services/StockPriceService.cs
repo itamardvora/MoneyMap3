@@ -28,6 +28,7 @@ namespace MoneyMap.Services
             _ttl = cacheTtl <= TimeSpan.Zero ? TimeSpan.FromHours(24) : cacheTtl;
         }
 
+        // מביא מחיר מניה עדכני או מהטבלה או מהאי פי אי 
         public async Task<decimal> GetPriceOrFetch(string symbol)
         {
             symbol = (symbol ?? string.Empty).Trim().ToUpperInvariant();
@@ -72,6 +73,8 @@ namespace MoneyMap.Services
             }
         }
 
+
+        //שולח בקשה ומחזיר מחיר מניה עדכני מה אי פי אי
         private async Task<decimal> FetchFromAlphaVantage(string symbol)
         {
             var url =

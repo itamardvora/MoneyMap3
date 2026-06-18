@@ -35,7 +35,7 @@ namespace MoneyMap.DAL
                 var databasePath = Path.Combine(FileSystem.AppDataDirectory, "MoneyMap.db3"); // יצירת הנתיב לקובץ של הדאטה בייס
                 _database = new SQLiteAsyncConnection(databasePath); // יצירת החיבור
 
-                await _database.CreateTableAsync<User>();
+                await _database.CreateTableAsync<User>(); // תוודא שהטבלה קיימת אם לא תיצור
                 await _database.CreateTableAsync<Investment>();
                 await _database.CreateTableAsync<Budget>();
                 await _database.CreateTableAsync<Expense>();

@@ -14,7 +14,7 @@ using MoneyMap.DAL;
 
 namespace MoneyMap.Services
 {
-    public class BudgetStatus
+    public class BudgetStatus // מחזיקה נתנוים מהבדגט סרוויס
     {
         public int BudgetID { get; set; }
         public int CategoryID { get; set; }

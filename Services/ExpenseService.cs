@@ -16,16 +16,14 @@ namespace MoneyMap.Services
             _expenseRepo = expenseRepo;
         }
 
-        /// <summary>
-        /// יוצר הוצאה חדשה. ניתן להעביר נתיב קבלה (אופציונלי).
-        /// </summary>
+      
         public async Task AddExpense(
             int userId,
             int categoryId,
             decimal amount,
             string reason,
             DateTime date,
-            string receiptPath = null)   // ← חדש (אופציונלי)
+            string receiptPath = null)   
         {
             if (amount <= 0) throw new ArgumentException("Amount must be positive");
             if (string.IsNullOrWhiteSpace(reason)) throw new ArgumentException("Reason is required");
@@ -50,6 +48,8 @@ namespace MoneyMap.Services
         public Task<List<ExpenseCategoryTotal>> GetExpensesByCategory(int userId, DateTime month) =>
             _expenseRepo.GetExpensesByCategory(userId, month);
 
+
+        // מחשב חלוקת הוצאות באחוזים לפי קטגוריות עבור חודש מסוים
         public async Task<List<(int CategoryID, double Percentage)>> GetCategoryBreakdown(int userId, DateTime month)
         {
             var categoryTotals = await _expenseRepo.GetExpensesByCategory(userId, month);

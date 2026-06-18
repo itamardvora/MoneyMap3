@@ -10,9 +10,14 @@ using MoneyMap.Services;
 namespace MoneyMap
 {
     public static class App
-    {
-        public static SQLiteAsyncConnection Db { get; private set; }
+    // מחלקה סטטית מרכזית שאחראית לאתחול בסיס הנתונים, המחסנים והשירותים של האפליקציהצ
+    //משמשת כנקודת גישה מרכזית לכל שכבות המידע והלוגיקה, כדי ששאר האפליקציה תוכל להשתמש בהן ממקום אחד
 
+    {
+       
+        public static SQLiteAsyncConnection Db { get; private set; } // שומר את החיבור לSQLLITE 
+
+        // שמירה של אוביקטים שאחראים על השינויים בממד נתונםי ועל הפעולות הלוגיסטיות
         public static UserRepository Users { get; private set; }
         public static InvestmentRepository Investments { get; private set; }
         public static BudgetRepository Budgets { get; private set; }
@@ -22,7 +27,7 @@ namespace MoneyMap
         public static CurrencyRateRepository CurrencyRateRepo { get; private set; }
         public static IncomeRepository Incomes { get; private set; }
 
-       
+
         public static FirebaseBackupState BackupState { get; private set; }
 
         public static UserService UserService { get; private set; }
@@ -35,10 +40,12 @@ namespace MoneyMap
         public static CurrencyService CurrencyService { get; private set; }
         public static IncomeService IncomeService { get; private set; }
 
-        private static bool _coreInited = false;
-        private static bool _fullInited = false;
+        private static bool _coreInited = false; // מסמן האם האתחול הבסיסי של האפליקציה כבר בוצע דברים בסיסיים
+        private static bool _fullInited = false; //   מסמן האם האתחול המלא אחרי התחברות המשתמש כבר בוצע הכל
 
-        public static async Task InitAsync()
+
+        // בודקת איזה אתחול צצרצךי וקרואת לפעולה הצמתאימה
+        public static async Task InitAsync() 
         {
             if (IsFullyReady())
                 return;
@@ -52,6 +59,7 @@ namespace MoneyMap
                 await InitAfterLoginAsync();
         }
 
+        // אתחול בסיסי דף הרשמה והתחברות
         public static async Task InitForAuthAsync()
         {
             if (_coreInited)
@@ -60,18 +68,18 @@ namespace MoneyMap
             await DatabaseContext.InitAsync();
             Db = DatabaseContext.GetConnection();
 
-            // עדיין נשאר כדי שה-DAL לא יישבר.
-            // בהמשך אפשר להחליף את כל App.BackupState לשיטה חדשה עם Firestore.
+          
             BackupState = new FirebaseBackupState();
 
             Users = new UserRepository(Db);
 
-            // כבר לא משתמשים ב-FirebaseAuthService הישן.
+           
             UserService = new UserService(Users);
 
             _coreInited = true;
         }
 
+        // אתחול מלא של הכל
         public static async Task InitAfterLoginAsync()
         {
             if (_fullInited)
@@ -109,9 +117,7 @@ namespace MoneyMap
                     TimeSpan.FromDays(1)
                 );
 
-                // חשוב:
-                // לא מחכים פה לשערי מטבע.
-                // אחרת התחברות אוטומטית יכולה להיתקע הרבה זמן.
+                
                 _ = Task.Run(async () =>
                 {
                     try
@@ -147,11 +153,10 @@ namespace MoneyMap
             _fullInited = true;
         }
 
-        // משאירים את הפונקציה כדי שאם יש מקום באפליקציה שקורא לה,
-        // הפרויקט לא יישבר. כרגע היא לא עושה כלום.
-        public static async Task TryBackupPendingChangesAsync()
+       // מנסה לעשות גיבוי אבל רק אם היה שינוי של גובה
+        public static async Task TryBackupPendingChangesAsync()  
         {
-            if (!IsFullyReady())
+            if (!IsFullyReady()) // מצחכה שהאפליקצציה תציהיה מוכנה 
                 return;
 
             var userId = UserSession.LoggedInUserId ?? Preferences.Get("LoggedInUserId", 0);
@@ -160,7 +165,7 @@ namespace MoneyMap
             if (userId <= 0)
                 return;
 
-            if (string.IsNullOrWhiteSpace(firebaseUid))
+            if (string.IsNullOrWhiteSpace(firebaseUid)) // אם אין מזהה של הפייר בייס מפסיקה
                 return;
 
             if (BackupState == null || !BackupState.HasPendingChanges)
@@ -171,7 +176,7 @@ namespace MoneyMap
             if (snapshot == null || !snapshot.HasAny)
                 return;
 
-            try
+            try // מנסה לעשות את הגיבוי
             {
                 await FireBaseHelper.BackupAllUserDataAsync();
 
@@ -179,17 +184,22 @@ namespace MoneyMap
 
                 Log.Info("App.Backup", "Full Firestore backup completed.");
             }
-            catch (Exception ex)
+            catch (Exception ex) // כותב אם לא הצצליחה שהגיבוי נכשל
             {
                 Log.Warn("App.Backup", "Full Firestore backup failed: " + ex.Message);
             }
         }
+
+
+        // בודקת אם האתחול המלא מוכן לא מאתחלת שום דבר
         public static bool IsCoreReady() =>
             _coreInited &&
             UserService != null &&
             Db != null;
 
-        public static bool IsFullyReady() =>
+
+        // בודקת אם האתחול המלא מוכן לא מאתחלת שום דבר
+        public static bool IsFullyReady() => 
             _fullInited &&
             UserService != null &&
             CategoryService != null &&

@@ -4,8 +4,7 @@ using System.Threading.Tasks;
 
 namespace MoneyMap.Services
 {
-    /// מחזיר שערים עדכניים יחסית ל-ILS עבור סט קודים מבוקש.
-    /// מתבסס על CurrencyApiClient שמושך שערים מבנק ישראל.
+
     public class ExchangeRatesClient : IExchangeRatesClient
     {
         private readonly CurrencyApiClient _api;
@@ -15,6 +14,8 @@ namespace MoneyMap.Services
             _api = api ?? new CurrencyApiClient();
         }
 
+
+        // מביא שער של המטבעות שקל ויור יחסית לשקל
         public async Task<Dictionary<string, decimal>> GetLatestAsync(IEnumerable<string> baseCurrencies)
         {
             var result = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase)
@@ -51,7 +52,7 @@ namespace MoneyMap.Services
                 }
                 catch
                 {
-                    // במקרה כישלון רשת/פורמט – לא נזרוק חריגה כללית; ניתן לשכבה מעל ליפול למטמון.
+                    // במקרה כישלון רשת/פורמט – לא נזרוק חריגה כללית; ניתן לשכבה מעל ליפול למטמון
                 }
             }
 
